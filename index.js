@@ -1,41 +1,38 @@
-const WebSocket = require('ws');
-const dhs = require('./dhs')
-dhs.start('13564803353@qq.com', '552233', '70424026') 
-
-const wss = new WebSocket.Server({ port: 3000 });
-
-
-
-wss.on('connection', function connection(ws) {
-
-	ws.on('message', function incoming(message) {
-		let data = JSON.parse(message)
-
-		const reply = (msg)=>{
-			let res = {
-				"action": ".handle_quick_operation",
-				"params": {
-					"context": data,
-					"operation": {
-						"reply": JSON.stringify(msg)
-					}
-				}
-			}
-			ws.send()
-		}
-
-		if (data.post_type === "message" && data.message.substr(0, 1) === "-") {
-			let parmas = data.message.substr(1).split(" ")
-			let method = parmas[0]
-			let contestId = parmas[1]
-			let param = parmas[2]
-			try {
-				dhs.callApi(method, contestId, (data)=>{
-					reply(data)
-				}, [param])
-			} catch (e) {
-				reply(e)
-			}
-		}
-	});
+'use strict'
+const fs = require('fs')
+process.on('uncaughtException', (e)=>{
+    fs.appendFile('err.log', Date() + ' ' + e.stack + '\n', ()=>{})
+    process.exit(1)
+})
+process.on('unhandledRejection', (reason, promise)=>{
+    fs.appendFileSync('err.log', Date() + ' Unhandled Rejection at:' + promise + 'reason:' + reason + '\n')
 });
+
+const WebSocket = require('ws')
+const main = require('./main')
+const wss = new WebSocket.Server({ port: 3000 })
+wss.on('connection', (ws)=>{
+    ws.on('message', async(message)=>{
+        let data = JSON.parse(message)
+        const reply = (msg)=>{
+            let res = {
+                'action': '.handle_quick_operation',
+                'params': {
+                    'context': data,
+                    'operation': {
+                        'reply': typeof msg === 'string' ? msg : JSON.stringify(msg)
+                    }
+                }
+            }
+            ws.send(res)
+        }
+        if (data.post_type === 'message' && data.message.substr(0, 3).toLowerCase() === 'dhs') {
+            let parmas = data.message.substr(1).split(' ')
+            let cmd = parmas[0].substr(3)
+            let param = parmas[1]
+            let cid = parmas[2]
+            let result = await main(data, cmd, param, cid)
+            reply(result)
+        }
+    })
+})
