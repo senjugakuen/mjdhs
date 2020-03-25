@@ -188,7 +188,6 @@ const checkQueue = async()=>{
         let task = taskQueue.shift()
         let result
         try {
-            console.time()
             if (!contestList.hasOwnProperty(task.contest_id))
                 await fetchRelatedContestList()
             if (!contestList.hasOwnProperty(task.contest_id))
@@ -213,7 +212,6 @@ const checkQueue = async()=>{
                         result = e
                 }
             }
-            console.timeEnd()
         } catch (e) {
             result = e
         }

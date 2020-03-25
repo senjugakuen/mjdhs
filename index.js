@@ -30,8 +30,7 @@ wss.on('connection', (ws)=>{
             let parmas = data.message.substr(1).split(' ')
             let cmd = parmas[0].substr(3)
             let param = parmas[1]
-            let cid = parmas[2]
-            let result = await main(data, cmd, param, cid)
+            let result = await main(data, cmd, param)
             reply(result)
         }
     })
