@@ -111,6 +111,7 @@ const main = async(data, cmd, param)=>{
                     break
             }
         } catch (e) {
+            return e
             let error = e.error
             if (error.code === 9999)
                 return '网络错误，请再试一次。如果在维护就别试了。'
