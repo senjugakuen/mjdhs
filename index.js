@@ -1,7 +1,7 @@
 'use strict'
 const fs = require('fs')
 process.on('uncaughtException', (e)=>{
-    fs.appendFile('err.log', Date() + ' ' + e.stack + '\n', ()=>{})
+    fs.appendFileSync('err.log', Date() + ' ' + e.stack + '\n', ()=>{})
     process.exit(1)
 })
 process.on('unhandledRejection', (reason, promise)=>{
@@ -48,7 +48,7 @@ http.createServer((req, res)=>{
     req.on('data', (d)=>data.push(d))
     req.on('end', async()=>{
         try {
-            data = Buffer.concat(gbl).toString()
+            data = Buffer.concat(data).toString()
             data = JSON.parse(data)
             if (data.post_type === 'message' && data.message.substr(0, 3).toLowerCase() === 'dhs') {
                 let parmas = data.message.substr(1).split(' ')
