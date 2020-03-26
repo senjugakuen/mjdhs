@@ -1,56 +1,79 @@
 'use strict'
 const fs = require('fs')
+const moment = require('moment')
 const dhs = require('./dhs')
-let db = {cids: new Set()}
-const saveDb = ()=>{
-    db.cids = [...db.cids]
-    fs.writeFileSync('./db', JSON.stringify(db))
-    db.cids = new Set(db.cids)
+const isMaster = (id)=>{
+    return [372914165].includes(id)
 }
+
+// 加载db
+let db = {cids: new Set()}
 if (fs.existsSync('./db')) {
     db = JSON.parse(fs.readFileSync('./db'))
     db.cids = new Set(db.cids)
 }
-setInterval(saveDb, 300000)
-process.on('exit', saveDb)
+
+// 定时保存db
+const saveDbSync = ()=>{
+    db.cids = [...db.cids]
+    fs.writeFileSync('./db', JSON.stringify(db))
+    db.cids = new Set(db.cids)
+}
+setInterval(saveDbSync, 300000)
+process.on('exit', saveDbSync)
+
+// 启动
 const eid = 25331349 //70424026
-dhs.start('372914165@qq.com', '552233')
+dhs.start('372914165@qq.com', '552233', eid)
+
+const reboot = ()=>{
+    new Promise((resolve, reject)=>{
+        dhs.close(()=>resolve())
+    }).then(()=>process.exit(1))
+}
 
 const callApi = async(method, cid, param)=>{
     return new Promise((resolve, reject)=>{
-        if (typeof param !== undefined)
-        param = [param]
         dhs.callApi(method, cid, (data)=>{
             if (data.hasOwnProperty('error'))
                 reject(data)
             else
                 resolve(data)
-        }, param)
+        }, [param])
     })
 }
 
 const help = `-----dhs指令说明-----
-第①步 在大会室后台将 ${eid}(比赛小助手) 设置为比赛管理
+第①步 在大会室后台将 ${eid} 设置为比赛管理
 第②步 使用"dhs绑定 赛事id"指令将qq群和比赛绑定(赛事id是6位数字)
 第③步 就可以用下面的指令啦
-dhs情报 ※查看赛事基本信息和规则
-dhs名单 ※查看选手名单
+dhs情报 ※查看赛事基本信息和规则 (别名: dhs信息)
+dhs名单 ※查看选手名单 (别名: dhs选手)
 dhs公告 ※查看公告
 dhs大厅 ※查看大厅中的对局，和准备中的玩家
 ★下面的命令群管理员才能使用
 dhs绑定 赛事id ※暂时一个群只能绑定一个比赛
 dhs解绑 ※解除绑定
-dhs添加 id1,id2,id3 ※添加选手
+dhs添加 id1,id2,id3 ※添加选手 (别名: dhs增加)
 dhs删除 id1,id2,id3 ※删除选手
 dhs重置 id1,id2,id3 ※只保留指定选手(参数为空会删除全部选手，慎用)
-dhs开赛 昵称1,昵称2,昵称3,昵称4 ※少设置选手会自动加电脑`
+dhs开赛 昵称1,昵称2,昵称3,昵称4 ※少设置选手会自动加电脑
+★隐藏命令
+dhs刷新 ※赛事基本信息更新不及时的时候，可使用此命令`
 
-const main = async(data, cmd, param)=>{
+const main = async(data)=>{
+    let parmas = data.message.trim().split(' ')
+    let cmd = parmas.shift().substr(3).trim()
+    if (isMaster(data.user_id) && cmd === '重启') {
+        reboot()
+        return '好的'
+    }
+    let param = parmas.join("").replace(/，/g, ',')
     let gid = data.group_id
     if (!gid) return '暂时不支持私聊'
     if (!db[gid]) db[gid] = {}
     let isAdmin = ['owner', 'admin'].includes(data.sender.role)
-    if (!isAdmin && ['添加', '删除', '重置', '开赛'].includes(cmd))
+    if (!isAdmin && ['绑定', '解绑', '添加', '删除', '重置', '开赛'].includes(cmd))
         return '你没有权限'
     let cid = 0
     let hasCid = db[gid].cid > 0
@@ -62,12 +85,14 @@ const main = async(data, cmd, param)=>{
         return '尚未绑定比赛'
     else {
         try {
-            let res
+            let res = ''
             switch (cmd) {
                 case '绑定':
                     if (hasCid)
                         return '已经绑定过比赛了，需要先解绑才能再次绑定。'
-                    let cid = parseInt(param)
+                    cid = parseInt(param)
+                    if (!cid)
+                        return '请输入正确的赛事id。'
                     if (db.cids.has(cid))
                         return '该比赛已经被绑定了。'
                     await callApi('fetchContestInfo', cid)
@@ -82,39 +107,83 @@ const main = async(data, cmd, param)=>{
                     db.cids.delete(cid)
                     return "解绑成功。(为了安全请务必删除大会室后台的管理权限)"
                     break
+                case '更新':
+                case '刷新':
+                    await callApi('renew', cid)
+                    return '好了'
+                    break
+                case '信息':
                 case '情报':
-                    res = callApi('fetchContestGameRule', cid)
+                    let info = await callApi('fetchContestInfo', cid)
+                    let rule = await callApi('fetchContestGameRule', cid)
+                    res = '[基本信息]'
+                    res += '\n赛事ID: ' + info.contest_id
+                    res += '\n赛事名: ' + info.contest_name
+                    res += '\n开始日: ' + moment.unix(info.start_time).utcOffset(8).format("YYYY/M/D HH:mm")
+                    res += '\n结束日: ' + moment.unix(info.finish_time).utcOffset(8).format("YYYY/M/D HH:mm")
+                    res += '\n公开的: ' + (info.open ? '是' : '否')
+                    res += '\n游戏类型: ' + ['四人東','四人南','三人東','三人南'][rule.round_type-1]
+                    res += '\n自动匹配: ' + (rule.auto_match ? '是' : '否')
+                    res += '\n食断有无: ' + (rule.shiduan ? '有' : '无')
+                    res += '\n赤宝数量: ' + rule.dora_count
+                    res += '\n思考时间: ' + rule.thinking_type
+                    res += '\n详细规则: ' + (rule.use_detail_rule ? '默认规则' : '非默认规则')
                     return res
                     break
                 case '公告':
-                    res = callApi('fetchContestNotice', cid)
+                    let notice = await callApi('fetchContestNotice', cid)
+                    res = '[外部公告]\n'
+                    res += notice[0]
+                    res += '\n\n[详细公告]\n'
+                    res += notice[1]
                     return res
                     break
+                case '选手':
                 case '名单':
-                    res = callApi('fetchContestPlayer', cid)
+                    let playerList = await callApi('fetchContestPlayer', cid)
+                    res = '[选手名单]\n'
+                    for (let v of playerList) {
+                        res += v.nickname + ','
+                    }
                     return res
                     break
                 case '大厅':
-                    res = callApi('startManageGame', cid)
+                    let lobby = await callApi('startManageGame', cid)
+                    res = '[对局中]\n'
+                    for (let v of lobby.games) {
+
+                    }
+                    res += '\n[准备中]\n'
+                    for (let v of lobby.players) {
+                        res += v.nickname + ','
+                    }
                     return res
                     break
+                case '增加':
                 case '添加':
+                    res = await callApi('addContestPlayer', cid, param)
+                    return res.info
                     break
                 case '删除':
+                    res = await callApi('removeContestPlayer', cid, param)
+                    return res.info
                     break
                 case '重置':
+                    res = await callApi('updateContestPlayer', cid, param)
+                    return res.info
                     break
                 case '开赛':
+                    res = await callApi('createContestGame', cid, param.replace(/！/g,'!').replace('/（/g','(').replace('/）/g',')'))
+                    return res.info
                     break
                 default:
                     return help
                     break
             }
         } catch (e) {
-            return e
             let error = e.error
             if (error.code === 9999)
-                return '网络错误，请再试一次。如果在维护就别试了。'
+                return '连接雀魂服务器失败，请再试一次。如果在维护就别试了。'
             if (error.code === 9997)
                 return '响应超时，可能已经执行成功。'
             if (error.message)

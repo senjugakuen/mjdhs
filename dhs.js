@@ -1,6 +1,13 @@
 'use strict'
 const MJSoul = require('mjsoul')
-const dhs = new MJSoul.DHS()
+let agent = null
+// const url = require('url')
+// const HttpsProxyAgent = require('https-proxy-agent')
+// agent = new HttpsProxyAgent(url.parse('http://b051925:lw58613669CP@10.39.74.38:50080'))
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0
+const dhs = new MJSoul.DHS({
+    wsOption: {agent: agent}
+})
 let auth = {
     account: '',
     password: '',
@@ -50,7 +57,7 @@ const apis = {
 
     // 查询规则
     fetchContestGameRule: async()=>{
-        let rules = (await dhs.sendAsync('fetchContestGameRule')).game_rule_setting
+        return (await dhs.sendAsync('fetchContestGameRule')).game_rule_setting
     },
 
     // 查询管理员列表 返回数组 [{account_id: 12345, nickname: '11111'}]
@@ -158,6 +165,11 @@ const apis = {
         )
         return {info: nicknames + ' 开赛成功。'}
     },
+
+    // renew
+    renew: async()=>{
+        await fetchRelatedContestList()
+    }
 }
 
 // 获得有管理权限的比赛
@@ -186,12 +198,17 @@ const checkQueue = async()=>{
     queueRuning = true
     while (taskQueue.length) {
         let task = taskQueue.shift()
+        if (task.name === 'stop') {
+            taskQueue = []
+            task.callback()
+            break
+        }
         let result
         try {
             if (!contestList.hasOwnProperty(task.contest_id))
                 await fetchRelatedContestList()
             if (!contestList.hasOwnProperty(task.contest_id))
-                result = {'error': `没有赛事${task.contest_id}的管理权限，请把${auth.eid}添加为赛事管理。添加后尽快绑定。`}
+                result = {'error': `没有赛事${task.contest_id}的管理权限，请把 ${auth.eid} 添加为赛事管理。添加后尽快绑定。`}
             else {
                 if (currentContestId != task.contest_id) {
                     if (currentContestId)
@@ -229,7 +246,7 @@ const init = async()=>{
         )
         await fetchRelatedContestList()
     } catch (e) {
-        console.log(e)
+        // console.log(e)
     }
 }
 
@@ -241,5 +258,11 @@ const start = (account, password, eid)=>{
     dhs.open(init)  
 }
 
+// 发送停止信号
+const close = (cb)=>{
+    callApi('stop', 0, cb)
+}
+
 module.exports.start = start
+module.exports.close = close
 module.exports.callApi = callApi

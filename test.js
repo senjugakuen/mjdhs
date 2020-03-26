@@ -1,3 +1,71 @@
+'use strict'
+const main = require('./main')
+
+const a = "917746"
+
+setTimeout(async()=>{
+
+let result
+result = await main({
+    'message': 'dhs绑定 '+a,
+    'group_id': 123,
+    'sender': {'role':'admin'}
+})
+console.log(result)
+
+result = await main({
+    'message': 'dhs情报',
+    'group_id': 123,
+    'sender': {'role':'admin'}
+})
+console.log(result)
+
+result = await main({
+    'message': 'dhs公告',
+    'group_id': 123,
+    'sender': {'role':'admin'}
+})
+console.log(result)
+
+result = await main({
+    'message': 'dhs名单',
+    'group_id': 123,
+    'sender': {'role':'admin'}
+})
+console.log(result)
+
+result = await main({
+    'message': 'dhs大厅',
+    'group_id': 123,
+    'sender': {'role':'admin'}
+})
+console.log(result)
+
+
+
+
+
+
+}, 4000)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // start('372914165@qq.com', '552233', '25331349')
 
 
