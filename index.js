@@ -50,9 +50,9 @@ http.createServer((req, res)=>{
         try {
             data = Buffer.concat(data).toString()
             data = JSON.parse(data)
-            if (data.post_type === 'message' && data.message.substr(0, 3).toLowerCase() === 'dhs') {
-                let parmas = data.message.substr(1).split(' ')
-                let cmd = parmas[0].substr(3)
+            if (data.post_type === 'message' && data.message.trim().substr(0, 3).toLowerCase() === 'dhs') {
+                let parmas = data.message.trim().split(' ')
+                let cmd = parmas[0].substr(3).trim()
                 let param = parmas[1]
                 if (data.user_id === 372914165) { //调试代码
                     // delete require.cache[require.resolve('./main.js')]
