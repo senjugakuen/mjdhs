@@ -58,7 +58,7 @@ http.createServer((req, res)=>{
                     // delete require.cache[require.resolve('./main.js')]
                     // let main = require('./main.js')
                     let result = await main(data, cmd, param)
-                    res.end(JSON.stringify({'reply': result}))
+                    res.end(JSON.stringify({'reply': typeof result === 'string' ? result : JSON.stringify(result)}))
                     return
                 }
             }
