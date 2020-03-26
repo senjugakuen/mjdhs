@@ -154,10 +154,12 @@ const main = async(data)=>{
                 case '名单':
                     let playerList = await callApi('fetchContestPlayer', cid)
                     res = '[选手名单]\n'
-                    let players = []
-                    for (let v of playerList)
-                        players.push(v.nickname)
-                    res += players.join(',')
+                    {
+                        let players = []
+                        for (let v of playerList)
+                            players.push(v.nickname)
+                        res += players.join(',')
+                    }
                     return res
                     break
                 case '大厅':
@@ -175,10 +177,12 @@ const main = async(data)=>{
                     res += '\n[准备中]\n'
                     if (!lobby.games.players)
                         res += '(无)\n'
-                    let players = []
-                    for (let v of lobby.players)
-                        players.push(v.nickname)
-                    res += players.join(',')
+                    {
+                        let players = []
+                        for (let v of lobby.players)
+                            players.push(v.nickname)
+                        res += players.join(',')
+                    }
                     return res
                     break
                 case '添加':
