@@ -13,21 +13,16 @@ process.on('unhandledRejection', (reason, promise)=>{
 const main = require('./main')
 const http = require('http')
 http.createServer((req, res)=>{
-    if (req.method === 'GET') {
-        let r = url.parse(req.url)
-        if (r.pathname === "/youShouldPull") {
-            proc.exec('./up', (error, stdout, stderr) => {
-                let output = JSON.stringify({
-                    "stdout": stdout,
-                    "stderr": stderr,
-                    "error": error
-                })
-                res.end(output)
+    let r = url.parse(req.url)
+    if (r.pathname === "/youShouldPull") {
+        proc.exec('./up', (error, stdout, stderr) => {
+            let output = JSON.stringify({
+                "stdout": stdout,
+                "stderr": stderr,
+                "error": error
             })
-        } else {
-            res.writeHead(404)
-            res.end()
-        }
+            res.end(output)
+        })
         return
     }
     if (req.method !== 'POST' || req.socket.remoteAddress !== '::ffff:172.17.0.2') {
