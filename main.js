@@ -45,21 +45,19 @@ const callApi = async(method, cid, param)=>{
 
 const help = `-----dhs指令说明-----
 第①步 在大会室后台将 ${eid}(查询) 设置为比赛管理
-第②步 使用"dhs绑定 赛事id"指令将qq群和比赛绑定(赛事id是6位数字)
+第②步 使用"dhs绑定 赛事id"指令将qq群和比赛绑定
 第③步 就可以用下面的指令啦
-dhs情报 ※查看赛事基本信息和规则
-dhs名单 ※查看选手名单 (别名: dhs选手)
-dhs公告 ※查看公告
-dhs大厅 ※查看大厅中的对局，和准备中的玩家
+  dhs情报 ※查看赛事基本信息和规则
+  dhs名单 ※查看选手名单
+  dhs公告 ※查看公告
+  dhs大厅 ※查看大厅中的对局，和准备中的玩家
 ★下面的命令群管理员才能使用
-dhs添加 id1,id2,id3 ※添加选手 (不能使用昵称，下同)
-dhs删除 id1,id2,id3 ※删除选手
-dhs重置 id1,id2,id3 ※只保留指定选手
-dhs开赛 昵称1,昵称2,昵称3,昵称4 ※少设置选手会自动添加电脑
-dhs绑定 赛事id
-dhs解绑
-★其他命令
-dhs刷新 ※赛事基本信息更新不及时的时候，可使用此命令`
+  dhs添加 id1,id2,id3 ※添加选手 (只能用id)
+  dhs删除 id1,id2,id3 ※删除选手
+  dhs重置 id1,id2,id3 ※只保留指定选手
+  dhs开赛 昵称1,昵称2,昵称3,昵称4 ※选手不足自动加电脑
+  dhs绑定 赛事id
+  dhs解绑`
 
 const u = (res)=>{
     let failure = res.total - res.success
@@ -86,8 +84,6 @@ const main = async(data)=>{
     if (!gid) return '暂时不支持私聊'
     if (!db[gid]) db[gid] = {}
     let isAdmin = ['owner', 'admin'].includes(data.sender.role)
-    if (!isAdmin && ['绑定', '解绑', '添加', '删除', '重置', '开赛'].includes(cmd))
-        return '你没有权限'
     let cid = 0
     let hasCid = db[gid].cid > 0
     if (hasCid)
@@ -95,8 +91,10 @@ const main = async(data)=>{
     if (cmd === '' || cmd === '帮助')
         return help
     else if (!hasCid && cmd !== '绑定')
-        return '尚未绑定比赛'
+        return '尚未绑定比赛。需要帮助输入: dhs'
     else {
+        if (!isAdmin && ['绑定', '解绑', '添加', '删除', '重置', '开赛'].includes(cmd))
+            return '你没有权限'
         try {
             let res = ''
             switch (cmd) {
