@@ -7,19 +7,15 @@ const isMaster = (id)=>{
 }
 
 // 加载db
-let db = {cids: new Set()}
+let db = {}
 if (fs.existsSync('./db')) {
     db = JSON.parse(fs.readFileSync('./db'))
-    db.cids = new Set(db.cids)
 }
 
-// 定时保存db
+// 保存db
 const saveDbSync = ()=>{
-    db.cids = [...db.cids]
     fs.writeFileSync('./db', JSON.stringify(db))
-    db.cids = new Set(db.cids)
 }
-setInterval(saveDbSync, 300000)
 process.on('exit', saveDbSync)
 
 // 启动
@@ -64,6 +60,10 @@ const u = (res)=>{
     return `总数${res.total}个，成功${res.success}个。` + (failure ? failure + '个ID是空号。' : '')
 }
 
+const findGid = (cid)=>{
+  return parseInt(Object.keys(db).find(k=>db[k]===cid))
+}
+
 const main = async(data)=>{
     data.message = data.message.trim()
     let debug = false
@@ -82,15 +82,12 @@ const main = async(data)=>{
     let param = parmas.join("").replace(/，/g, ',')
     let gid = data.group_id
     if (!gid) return '暂时不支持私聊'
-    if (!db[gid]) db[gid] = {}
     let isAdmin = ['owner', 'admin'].includes(data.sender.role)
     let cid = 0
-    let hasCid = db[gid].cid > 0
-    if (hasCid)
-        cid = db[gid].cid
+    if (db[gid]) cid = db[gid]
     if (cmd === '' || cmd === '帮助')
         return help
-    else if (!hasCid && cmd !== '绑定')
+    else if (!cid && cmd !== '绑定')
         return '尚未绑定比赛。需要帮助输入: dhs'
     else {
         if (!isAdmin && ['绑定', '解绑', '添加', '删除', '重置', '开赛'].includes(cmd))
@@ -99,28 +96,33 @@ const main = async(data)=>{
             let res = ''
             switch (cmd) {
                 case '绑定':
-                    if (hasCid)
+                    if (cid)
                         return '已经绑定过比赛了，需要先解绑才能再次绑定。'
                     cid = parseInt(param)
                     if (!cid)
                         return '请输入正确的赛事id。'
-                    if (db.cids.has(cid))
+                    if (findGid(cid))
                         return cid + '已经绑定了其他群。'
                     await callApi('fetchContestInfo', cid)
-                    db.cids.add(cid)
-                    db[gid].cid = cid
+                    db[gid] = cid
+                    saveDbSync()
                     return cid + "绑定成功。"
                     break
                 case '解绑':
-                    if (!db[gid].cid)
+                    if (!cid)
                         return '尚未绑定比赛。'
-                    delete db[gid].cid
-                    db.cids.delete(cid)
+                    delete db[gid]
+                    saveDbSync()
                     return cid + "解绑成功。(为了安全请务必删除大会室后台的管理权限)"
                     break
                 case '更新':
                 case '刷新':
-                    await callApi('renew', cid)
+                    let contestList = await callApi('renew', cid)
+                    for (let k in db) {
+                        if (!contestList.hasOwnProperty(db[k]))
+                            delete db[k]
+                    }
+                    saveDbSync()
                     return '好了'
                     break
                 case '情报':
@@ -225,7 +227,7 @@ const main = async(data)=>{
                 return error.message
             if (debug)
                 return e
-            return '没有获取到后台管理权限，如果删除了权限请及时解绑。'
+            return '执行失败。命令前加"-"可查看debug信息。'
         }
     }
 }

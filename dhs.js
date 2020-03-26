@@ -171,8 +171,7 @@ const apis = {
 
     // renew
     renew: async()=>{
-        await fetchRelatedContestList()
-        return {'info': 'OK'}
+        return await fetchRelatedContestList()
     }
 }
 
@@ -182,6 +181,7 @@ const fetchRelatedContestList = async()=>{
     contestList = {}
     for (let v of list.contests)
         contestList[v.contest_id] = v
+    return contestList
 }
 
 // 调用api
