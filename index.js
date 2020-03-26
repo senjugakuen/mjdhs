@@ -15,7 +15,7 @@ http.createServer((req, res)=>{
         res.end()
         return
     }
-    if (req.method !== 'POST' || !['127.0.0.1', '::1'].includes(req.socket.remoteAddress)) {
+    if (req.method !== 'POST' || req.socket.remoteAddress !== '::ffff:172.17.0.2') {
         res.end()
         return
     }
