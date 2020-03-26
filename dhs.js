@@ -1,13 +1,6 @@
 'use strict'
 const MJSoul = require('mjsoul')
-let agent = null
-// const url = require('url')
-// const HttpsProxyAgent = require('https-proxy-agent')
-// agent = new HttpsProxyAgent(url.parse('http://b051925:lw58613669CP@10.39.74.38:50080'))
-// process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0
-const dhs = new MJSoul.DHS({
-    wsOption: {agent: agent}
-})
+let dhs = null
 let auth = {
     account: '',
     password: '',
@@ -130,6 +123,11 @@ const apis = {
         return await dhs.sendAsync('fetchContestGameRecords', {last_index: last_index})
     },
 
+    // 获得排名列表
+    fetchCurrentRankList: async()=>{
+        return await dhs.sendAsync('fetchCurrentRankList')
+    },
+
     // 开赛
     createContestGame: async(nicknames)=>{
         let slots = []
@@ -236,8 +234,11 @@ const checkQueue = async()=>{
                         e.error.message = '自动匹配模式下不能手动开赛。'
                         result = e
                     }
-                    else
+                    if (e.error.code === 2505) {
+                        e.error.message = '暂时无法登录大会室后台。'
                         result = e
+                    }
+                    result = e
                 }
             }
         } catch (e) {
@@ -262,10 +263,11 @@ const init = async()=>{
 }
 
 // 启动函数
-const start = (account, password, eid)=>{
+const start = (account, password, eid, option = {})=>{
     auth.account = account
     auth.password = password
     auth.eid = eid
+    dhs = new MJSoul.DHS(option)
     dhs.open(init)  
 }
 
@@ -274,6 +276,21 @@ const close = (cb)=>{
     callApi('stop', 0, cb)
 }
 
+// 绑定事件
+const on = (name, cb)=>{
+    dhs.on(name, cb)
+}
+
 module.exports.start = start
 module.exports.close = close
 module.exports.callApi = callApi
+module.exports.on = on //start之后才能绑定事件
+
+// start('372914165@qq.com', '552233', 1111)
+// setTimeout(async()=>{
+
+// callApi('fetchCurrentRankList', 917746, (data)=>{
+//     console.log(data)
+// })
+
+// },4000) 

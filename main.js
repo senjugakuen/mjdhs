@@ -11,7 +11,6 @@ let db = {}
 if (fs.existsSync('./db')) {
     db = JSON.parse(fs.readFileSync('./db'))
 }
-
 // 保存db
 const saveDbSync = ()=>{
     fs.writeFileSync('./db', JSON.stringify(db))
@@ -22,6 +21,7 @@ process.on('exit', saveDbSync)
 const eid = 25331349 //70424026
 dhs.start('372914165@qq.com', '552233', eid)
 
+// 安全退出(forever或pm2自动重启)
 const reboot = ()=>{
     new Promise((resolve, reject)=>{
         dhs.close(()=>resolve())
@@ -142,6 +142,7 @@ const main = async(data)=>{
                     res += '\n详细规则: ' + (rule.use_detail_rule ? '默认规则' : '非默认规则')
                     return res
                     break
+
                 case '公告':
                     let notice = await callApi('fetchContestNotice', cid)
                     res = '\n[外部公告]\n'
@@ -184,6 +185,19 @@ const main = async(data)=>{
                         for (let v of lobby.players)
                             players.push(v.nickname)
                         res += players.join(',')
+                    }
+                    return res
+                    break
+                case '排名':
+                    let rankList = await callApi('fetchCurrentRankList', cid)
+                    res = '[当前排名]\n'
+                    if (!rankList.length)
+                        res += '(空)\n'
+                    {
+                        // let players = []
+                        // for (let v of playerList)
+                        //     players.push(v.nickname)
+                        // res += players.join(',')
                     }
                     return res
                     break
