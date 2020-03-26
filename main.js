@@ -107,7 +107,7 @@ const main = async(data)=>{
                     if (!cid)
                         return '请输入正确的赛事id。'
                     if (db.cids.has(cid))
-                        return cid + '已经被绑定了。'
+                        return cid + '已经绑定了其他群。'
                     await callApi('fetchContestInfo', cid)
                     db.cids.add(cid)
                     db[gid].cid = cid
