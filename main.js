@@ -67,6 +67,14 @@ const u = (res)=>{
 }
 
 const main = async(data)=>{
+    data.message = data.message.trim()
+    let debug = false
+    if (data.message[0] === '-') {
+        debug = true
+        data.message = data.message.substr(1)
+    }
+    if (!data.message.substr(0, 3).toLowerCase() === 'dhs')
+        return
     let parmas = data.message.trim().split(' ')
     let cmd = parmas.shift().substr(3).trim()
     if (isMaster(data.user_id) && cmd === '重启') {
@@ -207,7 +215,8 @@ const main = async(data)=>{
                 return '响应超时，可能已经执行成功。'
             if (error.message)
                 return error.message
-            return e
+            if (debug)
+                return e
             return '执行失败。'
         }
     }
