@@ -128,7 +128,7 @@ const main = async(data)=>{
                 case '情报':
                     let info = await callApi('fetchContestInfo', cid)
                     let rule = await callApi('fetchContestGameRule', cid)
-                    res = '\n[赛事基本信息]'
+                    res = '[赛事基本信息]'
                     res += '\n赛事ID: ' + info.contest_id
                     res += '\n赛事名: ' + info.contest_name
                     res += '\n开始日: ' + moment.unix(info.start_time).utcOffset(8).format("YYYY/M/D HH:mm")
