@@ -26,7 +26,7 @@ http.createServer((req, res)=>{
             data = Buffer.concat(data).toString()
             data = JSON.parse(data)
             if (data.post_type === 'message' && data.message.trim().substr(0, 3).toLowerCase() === 'dhs') {
-                let result = await main(data, cmd, param)
+                let result = await main(data)
                 res.end(JSON.stringify({'reply': typeof result === 'string' ? result : JSON.stringify(result)}))
                 return
             }
