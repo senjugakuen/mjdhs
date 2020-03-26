@@ -47,14 +47,14 @@ const help = `-----dhs指令说明-----
 第①步 在大会室后台将 ${eid} 设置为比赛管理
 第②步 使用"dhs绑定 赛事id"指令将qq群和比赛绑定(赛事id是6位数字)
 第③步 就可以用下面的指令啦
-dhs情报 ※查看赛事基本信息和规则 (别名: dhs信息)
+dhs情报 ※查看赛事基本信息和规则
 dhs名单 ※查看选手名单 (别名: dhs选手)
 dhs公告 ※查看公告
 dhs大厅 ※查看大厅中的对局，和准备中的玩家
 ★下面的命令群管理员才能使用
 dhs绑定 赛事id ※暂时一个群只能绑定一个比赛
 dhs解绑 ※解除绑定
-dhs添加 id1,id2,id3 ※添加选手 (别名: dhs增加)
+dhs添加 id1,id2,id3 ※添加选手
 dhs删除 id1,id2,id3 ※删除选手
 dhs重置 id1,id2,id3 ※只保留指定选手(参数为空会删除全部选手，慎用)
 dhs开赛 昵称1,昵称2,昵称3,昵称4 ※少设置选手会自动加电脑
@@ -125,7 +125,6 @@ const main = async(data)=>{
                     await callApi('renew', cid)
                     return '好了'
                     break
-                case '信息':
                 case '情报':
                     let info = await callApi('fetchContestInfo', cid)
                     let rule = await callApi('fetchContestGameRule', cid)
@@ -178,7 +177,6 @@ const main = async(data)=>{
                     }
                     return res
                     break
-                case '增加':
                 case '添加':
                     if (!param)
                         return '请输入ID'
