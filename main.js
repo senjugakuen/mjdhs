@@ -63,7 +63,7 @@ dhs刷新 ※赛事基本信息更新不及时的时候，可使用此命令`
 
 const u = (res)=>{
     let failure = res.total - res.success
-    return `总数${res.total} 成功${res.success} ` + (failure ? failure + '个ID是空号' : '')
+    return `总数${res.total}个，成功${res.success}个。` + (failure ? failure + '个ID是空号。' : '')
 }
 
 const main = async(data)=>{
@@ -107,18 +107,18 @@ const main = async(data)=>{
                     if (!cid)
                         return '请输入正确的赛事id。'
                     if (db.cids.has(cid))
-                        return '该比赛已经被绑定了。'
+                        return cid + '已经被绑定了。'
                     await callApi('fetchContestInfo', cid)
                     db.cids.add(cid)
                     db[gid].cid = cid
-                    return "绑定成功。"
+                    return cid + "绑定成功。"
                     break
                 case '解绑':
                     if (!db[gid].cid)
                         return '尚未绑定比赛。'
                     delete db[gid].cid
                     db.cids.delete(cid)
-                    return "解绑成功。(为了安全请务必删除大会室后台的管理权限)"
+                    return cid + "解绑成功。(为了安全请务必删除大会室后台的管理权限)"
                     break
                 case '更新':
                 case '刷新':
@@ -128,7 +128,7 @@ const main = async(data)=>{
                 case '情报':
                     let info = await callApi('fetchContestInfo', cid)
                     let rule = await callApi('fetchContestGameRule', cid)
-                    res = '[基本信息]'
+                    res = '\n[赛事基本信息]'
                     res += '\n赛事ID: ' + info.contest_id
                     res += '\n赛事名: ' + info.contest_name
                     res += '\n开始日: ' + moment.unix(info.start_time).utcOffset(8).format("YYYY/M/D HH:mm")
@@ -144,7 +144,7 @@ const main = async(data)=>{
                     break
                 case '公告':
                     let notice = await callApi('fetchContestNotice', cid)
-                    res = '[外部公告]\n'
+                    res = '\n[外部公告]\n'
                     res += notice[0]
                     res += '\n\n[详细公告]\n'
                     res += notice[1]
@@ -153,7 +153,9 @@ const main = async(data)=>{
                 case '选手':
                 case '名单':
                     let playerList = await callApi('fetchContestPlayer', cid)
-                    res = '[选手名单]\n'
+                    res = '[参赛花名册]\n'
+                    if (!playerList.length)
+                        res += '(空)\n'
                     {
                         let players = []
                         for (let v of playerList)
@@ -164,7 +166,7 @@ const main = async(data)=>{
                     break
                 case '大厅':
                     let lobby = await callApi('startManageGame', cid)
-                    res = '[对局中]\n'
+                    res = '\n[对局中]\n'
                     if (!lobby.games.length)
                         res += '(无)\n'
                     for (let v of lobby.games) {
@@ -199,7 +201,7 @@ const main = async(data)=>{
                     break
                 case '重置':
                     if (!param)
-                        return '请输入ID ※如果想删除全部选手输入: "dhs重置 确认"'
+                        return '请输入ID ※删除全部选手输入:"dhs重置 确认"'
                     if (param === '确认')
                         param = undefined
                     res = await callApi('updateContestPlayer', cid, param)
@@ -225,7 +227,7 @@ const main = async(data)=>{
                 return error.message
             if (debug)
                 return e
-            return '执行失败，没有获取到后台管理权限。'
+            return '没有获取到后台管理权限，如果删除了权限请及时解绑。'
         }
     }
 }
