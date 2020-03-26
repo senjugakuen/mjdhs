@@ -134,8 +134,6 @@ const apis = {
     createContestGame: async(nicknames)=>{
         let slots = []
         let players = (await apis.startManageGame()).players
-        if (!players)
-            return {error: '未知错误'}
         nicknames = nicknames.split(',')
         let added = []
         for (let v of players) {
@@ -151,7 +149,12 @@ const apis = {
             }
         }
         if (absent.length)
-            return {error: "开赛失败。" + absent.toString() + '缺席。'}
+            return {
+                error: {
+                    'message': '开赛失败。' + absent.toString() + '缺席。',
+                    'code': 8999
+                }
+            }
         let result = await dhs.sendAsync(
             'createContestGame',
             {
@@ -208,7 +211,12 @@ const checkQueue = async()=>{
             if (!contestList.hasOwnProperty(task.contest_id))
                 await fetchRelatedContestList()
             if (!contestList.hasOwnProperty(task.contest_id))
-                result = {'error': `没有赛事${task.contest_id}的管理权限，请把 ${auth.eid} 添加为赛事管理。添加后尽快绑定。`}
+                result = {
+                    'error': {
+                        'message': `没有赛事${task.contest_id}的管理权限，请把 ${auth.eid} 添加为赛事管理。添加后尽快绑定。`,
+                        'code': 9000
+                    }
+                }
             else {
                 if (currentContestId != task.contest_id) {
                     if (currentContestId)
@@ -223,8 +231,10 @@ const checkQueue = async()=>{
                 try {
                     result = await apis[task.name].apply(null, task.params)
                 } catch (e) {
-                    if (e.error.code === 2521)
-                        result = {error: '自动匹配模式下不能手动开赛。'}
+                    if (e.error.code === 2521) {
+                        e.error.message = '自动匹配模式下不能手动开赛。'
+                        result = e
+                    }
                     else
                         result = e
                 }

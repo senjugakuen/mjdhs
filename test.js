@@ -41,7 +41,19 @@ result = await main({
 })
 console.log(result)
 
+result = await main({
+    'message': 'dhs添加',
+    'group_id': 123,
+    'sender': {'role':'admin'}
+})
+console.log(result)
 
+// result = await main({
+//     'message': 'dhs开赛 高山',
+//     'group_id': 123,
+//     'sender': {'role':'admin'}
+// })
+// console.log(result)
 
 
 

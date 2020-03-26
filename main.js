@@ -61,6 +61,11 @@ dhs开赛 昵称1,昵称2,昵称3,昵称4 ※少设置选手会自动加电脑
 ★隐藏命令
 dhs刷新 ※赛事基本信息更新不及时的时候，可使用此命令`
 
+const u = (res)=>{
+    let failure = res.total - res.success
+    return `总数${res.total} 成功${res.success} ` + (failure ? failure + '个ID是空号' : '')
+}
+
 const main = async(data)=>{
     let parmas = data.message.trim().split(' ')
     let cmd = parmas.shift().substr(3).trim()
@@ -122,11 +127,11 @@ const main = async(data)=>{
                     res += '\n开始日: ' + moment.unix(info.start_time).utcOffset(8).format("YYYY/M/D HH:mm")
                     res += '\n结束日: ' + moment.unix(info.finish_time).utcOffset(8).format("YYYY/M/D HH:mm")
                     res += '\n公开的: ' + (info.open ? '是' : '否')
+                    res += '\n自动匹配: ' + (info.auto_match ? '是' : '否')
                     res += '\n游戏类型: ' + ['四人東','四人南','三人東','三人南'][rule.round_type-1]
-                    res += '\n自动匹配: ' + (rule.auto_match ? '是' : '否')
                     res += '\n食断有无: ' + (rule.shiduan ? '有' : '无')
-                    res += '\n赤宝数量: ' + rule.dora_count
-                    res += '\n思考时间: ' + rule.thinking_type
+                    res += '\n赤宝数量: ' + rule.dora_count + '枚'
+                    res += '\n思考时间: ' + ['3+5秒','5+10秒','5+20秒','60+0秒'][rule.thinking_type-1]
                     res += '\n详细规则: ' + (rule.use_detail_rule ? '默认规则' : '非默认规则')
                     return res
                     break
@@ -150,10 +155,16 @@ const main = async(data)=>{
                 case '大厅':
                     let lobby = await callApi('startManageGame', cid)
                     res = '[对局中]\n'
+                    if (!lobby.games.length) res += '(无)\n'
                     for (let v of lobby.games) {
-
+                        let players = []
+                        for (let vv of v.players) {
+                            players.push(vv.nickname ? vv.nickname : '电脑')
+                        }
+                        res += players.join(',') + ' / ' + moment.unix(v.start_time).utcOffset(8).format("HH:mm:ss") + '开始 / ' + v.game_uuid.substr(0, 15) + '\n'
                     }
                     res += '\n[准备中]\n'
+                    if (!lobby.games.players) res += '(无)\n'
                     for (let v of lobby.players) {
                         res += v.nickname + ','
                     }
@@ -161,18 +172,26 @@ const main = async(data)=>{
                     break
                 case '增加':
                 case '添加':
+                    if (!param)
+                        return '请输入ID'
                     res = await callApi('addContestPlayer', cid, param)
-                    return res.info
+                    return '添加' + u(res)
                     break
                 case '删除':
+                    if (!param)
+                        return '请输入ID'
                     res = await callApi('removeContestPlayer', cid, param)
-                    return res.info
+                    return '删除' + u(res)
                     break
                 case '重置':
+                    if (!param)
+                        return '请输入ID'
                     res = await callApi('updateContestPlayer', cid, param)
-                    return res.info
+                    return '重置' + u(res)
                     break
                 case '开赛':
+                    if (!param)
+                        return '请输入ID'
                     res = await callApi('createContestGame', cid, param.replace(/！/g,'!').replace('/（/g','(').replace('/）/g',')'))
                     return res.info
                     break
@@ -188,6 +207,7 @@ const main = async(data)=>{
                 return '响应超时，可能已经执行成功。'
             if (error.message)
                 return error.message
+            return e
             return '执行失败。'
         }
     }
