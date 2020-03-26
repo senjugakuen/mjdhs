@@ -172,6 +172,7 @@ const apis = {
     // renew
     renew: async()=>{
         await fetchRelatedContestList()
+        return {'info': 'OK'}
     }
 }
 

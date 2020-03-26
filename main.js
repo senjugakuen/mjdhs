@@ -56,8 +56,8 @@ dhs绑定 赛事id ※暂时一个群只能绑定一个比赛
 dhs解绑 ※解除绑定
 dhs添加 id1,id2,id3 ※添加选手
 dhs删除 id1,id2,id3 ※删除选手
-dhs重置 id1,id2,id3 ※只保留指定选手(参数为空会删除全部选手，慎用)
-dhs开赛 昵称1,昵称2,昵称3,昵称4 ※少设置选手会自动加电脑
+dhs重置 id1,id2,id3 ※只保留指定选手(想删除全部选手输入: dhs重置 确认)
+dhs开赛 昵称1,昵称2,昵称3,昵称4 ※少设置选手会自动添加电脑
 ★隐藏命令
 dhs刷新 ※赛事基本信息更新不及时的时候，可使用此命令`
 
@@ -192,6 +192,8 @@ const main = async(data)=>{
                 case '重置':
                     if (!param)
                         return '请输入ID'
+                    if (param === '确认')
+                        param = undefined
                     res = await callApi('updateContestPlayer', cid, param)
                     return '重置' + u(res)
                     break
