@@ -56,7 +56,7 @@ dhs绑定 赛事id ※暂时一个群只能绑定一个比赛
 dhs解绑 ※解除绑定
 dhs添加 id1,id2,id3 ※添加选手
 dhs删除 id1,id2,id3 ※删除选手
-dhs重置 id1,id2,id3 ※只保留指定选手(想删除全部选手输入: dhs重置 确认)
+dhs重置 id1,id2,id3 ※只保留指定选手
 dhs开赛 昵称1,昵称2,昵称3,昵称4 ※少设置选手会自动添加电脑
 ★隐藏命令
 dhs刷新 ※赛事基本信息更新不及时的时候，可使用此命令`
@@ -154,15 +154,17 @@ const main = async(data)=>{
                 case '名单':
                     let playerList = await callApi('fetchContestPlayer', cid)
                     res = '[选手名单]\n'
-                    for (let v of playerList) {
-                        res += v.nickname + ','
-                    }
+                    let players = []
+                    for (let v of playerList)
+                        players.push(v.nickname)
+                    res += players.join(',')
                     return res
                     break
                 case '大厅':
                     let lobby = await callApi('startManageGame', cid)
                     res = '[对局中]\n'
-                    if (!lobby.games.length) res += '(无)\n'
+                    if (!lobby.games.length)
+                        res += '(无)\n'
                     for (let v of lobby.games) {
                         let players = []
                         for (let vv of v.players) {
@@ -171,10 +173,12 @@ const main = async(data)=>{
                         res += players.join(',') + ' / ' + moment.unix(v.start_time).utcOffset(8).format("HH:mm:ss") + '开始 / ' + v.game_uuid.substr(0, 15) + '\n'
                     }
                     res += '\n[准备中]\n'
-                    if (!lobby.games.players) res += '(无)\n'
-                    for (let v of lobby.players) {
-                        res += v.nickname + ','
-                    }
+                    if (!lobby.games.players)
+                        res += '(无)\n'
+                    let players = []
+                    for (let v of lobby.players)
+                        players.push(v.nickname)
+                    res += players.join(',')
                     return res
                     break
                 case '添加':
@@ -191,7 +195,7 @@ const main = async(data)=>{
                     break
                 case '重置':
                     if (!param)
-                        return '请输入ID'
+                        return '请输入ID (如果想删除全部选手输入: dhs重置 确认)'
                     if (param === '确认')
                         param = undefined
                     res = await callApi('updateContestPlayer', cid, param)
@@ -217,7 +221,7 @@ const main = async(data)=>{
                 return error.message
             if (debug)
                 return e
-            return '执行失败。'
+            return '执行失败，没有获取到后台管理权限。'
         }
     }
 }
