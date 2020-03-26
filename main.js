@@ -199,7 +199,7 @@ const main = async(data)=>{
                     break
                 case '重置':
                     if (!param)
-                        return '请输入ID (如果想删除全部选手输入: dhs重置 确认)'
+                        return '请输入ID ※如果想删除全部选手输入: dhs重置 确认'
                     if (param === '确认')
                         param = undefined
                     res = await callApi('updateContestPlayer', cid, param)
