@@ -203,9 +203,9 @@ const main = async(data)=>{
                     if (!param)
                         return '请输入ID ※删除全部选手输入:"dhs重置 确认"'
                     if (param === '确认')
-                        param = undefined
+                        param = ''
                     res = await callApi('updateContestPlayer', cid, param)
-                    return '重置' + u(res)
+                    return '重置' + (param !== '' ? u(res) : '成功')
                     break
                 case '开赛':
                     if (!param)
