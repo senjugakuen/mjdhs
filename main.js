@@ -73,7 +73,7 @@ const main = async(data)=>{
         debug = true
         data.message = data.message.substr(1)
     }
-    if (!data.message.substr(0, 3).toLowerCase() === 'dhs')
+    if (data.message.substr(0, 3).toLowerCase() !== 'dhs')
         return
     let parmas = data.message.trim().split(' ')
     let cmd = parmas.shift().substr(3).trim()
