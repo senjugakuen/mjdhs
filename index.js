@@ -4,10 +4,11 @@ const url = require("url")
 const proc = require('child_process')
 process.on('uncaughtException', (e)=>{
     fs.appendFileSync('err.log', Date() + ' ' + e.stack + '\n')
-    // process.exit(1)
+    process.exit(1)
 })
 process.on('unhandledRejection', (reason, promise)=>{
     fs.appendFileSync('err.log', Date() + ' Unhandled Rejection: ' + reason + '\n')
+    process.exit(1)
 });
 
 const main = require('./main')
