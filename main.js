@@ -92,7 +92,7 @@ const main = async(data)=>{
     let hasCid = db[gid].cid > 0
     if (hasCid)
         cid = db[gid].cid
-    if (cmd === '')
+    if (cmd === '' || cmd === '帮助')
         return help
     else if (!hasCid && cmd !== '绑定')
         return '尚未绑定比赛'
