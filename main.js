@@ -186,14 +186,12 @@ const main = async(data)=>{
                     let max_game_count = rule.detail_rule_v2.extra_rule.max_game_count
                     if (max_game_count)
                         res += '\n局数限制: ' + max_game_count
-                    res += '\n游戏类型: ' + {1:'四人東',2:'四人南',11:'三人東',12:'三人南'}[rule.round_type] + `, ${rule.shiduan?'有':'无'}食断, ${rule.dora_count}枚赤宝`
+                    res += '\n游戏类型: ' + {1:'四人東',2:'四人南',11:'三人東',12:'三人南'}[rule.round_type] + ` / ${rule.shiduan?'有':'无'}食断 / ${rule.dora_count}枚赤宝`
                     let detail = rule.detail_rule_v2.game_rule
-                    res += '\n初始点数: ' + detail.init_point + '点'
-                    res += '\n一位必要: ' + detail.fandian + '点'
-                    res += '\n精算原点: ' + detail.jingsuanyuandian + '点'
+                    res += '\n点数设定: ' + `初始${detail.init_point} / 返点${detail.fandian} / 精算${detail.jingsuanyuandian}`
                     res += '\n击飞和天边: ' + (detail.can_jifei ? `${detail.tianbian_value}点以下击飞` : '无击飞')
-                    res += '\n立直棒场棒: ' + detail.liqibang_value + '点, ' + detail.changbang_value + '点'
-                    res += '\n顺位马差马: ' + `二位${detail.shunweima_2} 三位${detail.shunweima_3}` + ([1,2].includes(rule.round_type) ? ` 四位${detail.shunweima_4}` : '')
+                    res += '\n立直棒场棒: ' + detail.liqibang_value + '点 / ' + detail.changbang_value + '点'
+                    res += '\n顺位马差马: ' + `二位${detail.shunweima_2} / 三位${detail.shunweima_3}` + ([1,2].includes(rule.round_type) ? ` / 四位${detail.shunweima_4}` : '')
                     let enabled = [], disabled = []
                     for (let i in other_rules) {
                         if (i === 'disable_multi_yukaman')
