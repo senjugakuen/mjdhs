@@ -301,7 +301,6 @@ const main = async(data)=>{
                     break
             }
         } catch (e) {
-            return e
             let error = e.error
             if (error.code === 9999)
                 return '连接雀魂服务器失败，请再试一次。如果在维护就别试了。'
