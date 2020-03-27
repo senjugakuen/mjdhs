@@ -1,6 +1,7 @@
 'use strict'
 const fs = require('fs')
 const moment = require('moment')
+const http = require('http')
 const dhs = require('./dhs')
 const isMaster = (id)=>{
     return [372914165].includes(id)
@@ -42,22 +43,30 @@ const callApi = async(method, cid, param)=>{
 const help = `-----dhs指令说明-----
 第①步 在大会室后台将 ${eid}(查询) 设置为比赛管理
 第②步 使用"dhs绑定 赛事id"指令将qq群和比赛绑定
-第③步 就可以用下面的指令啦
+第③步 就可以用下面的指令啦!
   dhs情报 ※查看赛事基本信息和规则
-  dhs名单 ※查看选手名单
-  dhs公告 ※查看公告
   dhs大厅 ※查看大厅中的对局，和准备中的玩家
-★下面的命令群管理员才能使用
-  dhs添加 id1,id2,id3 ※添加选手 (只能用id)
-  dhs删除 id1,id2,id3 ※删除选手
-  dhs重置 id1,id2,id3 ※只保留指定选手
-  dhs开赛 昵称1,昵称2,昵称3,昵称4 ※选手不足自动加电脑
-  dhs绑定 赛事id
-  dhs解绑`
+  dhs名单 / dhs公告 / dhs排名 / dhs刷新
+★添删选手和开赛等命令群管理才能使用
+  dhs添加 / dhs删除 / dhs重置 
+    ※例: "dhs添加 id1,id2" (只能用数字id
+  dhs开赛 ※原样输入查看详细用法 
+  dhs绑定 赛事id / dhs解绑`
+
+const kaisai = `-----dhs开赛指令说明-----
+①一般用法
+  dhs开赛 A君,B君,C君,D君
+①设置点数(没名字的是电脑)
+  dhs开赛 A君(5000),B君(5000),C君(5000)
+  dhs开赛 A君(5000),(5000),(5000)
+③固定東南西北(前面加感叹号)
+  dhs开赛 !A君,B君,C君,D君
+※选手不足会自动添加普通电脑
+※暂时只能使用昵称开赛`
 
 const u = (res)=>{
     let failure = res.total - res.success
-    return `总数${res.total}个，成功${res.success}个。` + (failure ? failure + '个ID是空号。' : '')
+    return `成功${res.success}个(${res.nicknames})。` + (failure ? failure + '个ID是空号。' : '')
 }
 
 const findGid = (cid)=>{
@@ -90,11 +99,12 @@ const main = async(data)=>{
     else if (!cid && cmd !== '绑定')
         return '尚未绑定比赛。需要帮助输入: dhs'
     else {
-        if (!isAdmin && ['绑定', '解绑', '添加', '删除', '重置', '开赛'].includes(cmd))
+        if (!isAdmin && ['綁定', '绑定', '解綁', '解绑', '添加', '删除', '重置', '开赛', '開賽'].includes(cmd))
             return '你没有权限'
         try {
             let res = ''
             switch (cmd) {
+                case '綁定':
                 case '绑定':
                     if (cid)
                         return '已经绑定过比赛了，需要先解绑才能再次绑定。'
@@ -108,6 +118,7 @@ const main = async(data)=>{
                     saveDbSync()
                     return cid + "绑定成功。"
                     break
+                case '解綁':
                 case '解绑':
                     if (!cid)
                         return '尚未绑定比赛。'
@@ -125,6 +136,7 @@ const main = async(data)=>{
                     saveDbSync()
                     return '好了'
                     break
+                case '情報':
                 case '情报':
                     let info = await callApi('fetchContestInfo', cid)
                     let rule = await callApi('fetchContestGameRule', cid)
@@ -141,8 +153,7 @@ const main = async(data)=>{
                     res += '\n思考时间: ' + ['3+5秒','5+10秒','5+20秒','60+0秒'][rule.thinking_type-1]
                     res += '\n详细规则: ' + (rule.use_detail_rule ? '默认规则' : '非默认规则')
                     return res
-                    break
-
+                    break      
                 case '公告':
                     let notice = await callApi('fetchContestNotice', cid)
                     res = '\n[外部公告]\n'
@@ -151,6 +162,8 @@ const main = async(data)=>{
                     res += notice[1]
                     return res
                     break
+                case '選手':
+                case '名單':
                 case '选手':
                 case '名单':
                     let playerList = await callApi('fetchContestPlayer', cid)
@@ -165,6 +178,7 @@ const main = async(data)=>{
                     }
                     return res
                     break
+                case '大廳':
                 case '大厅':
                     let lobby = await callApi('startManageGame', cid)
                     res = '\n[对局中]\n'
@@ -192,12 +206,11 @@ const main = async(data)=>{
                     let rankList = await callApi('fetchCurrentRankList', cid)
                     res = '[当前排名]\n'
                     if (!rankList.length)
-                        res += '(空)\n'
-                    {
-                        // let players = []
-                        // for (let v of playerList)
-                        //     players.push(v.nickname)
-                        // res += players.join(',')
+                        res += '(空)'
+                    else
+                        res += '-姓名- -总分- -对局数-'
+                    for (let v of rankList) {
+                        res += `\n${v.nickname} ${v.total_point} ${v.total_count}`
                     }
                     return res
                     break
@@ -221,11 +234,12 @@ const main = async(data)=>{
                     res = await callApi('updateContestPlayer', cid, param)
                     return '重置' + (param !== '' ? u(res) : '成功')
                     break
+                case '開賽':
                 case '开赛':
                     if (!param)
-                        return '请输入ID'
+                        return kaisai
                     res = await callApi('createContestGame', cid, param.replace(/！/g,'!').replace('/（/g','(').replace('/）/g',')'))
-                    return res.info
+                    return '开赛成功, 游戏编号: ' + res.game_uuid
                     break
                 default:
                     return help
@@ -245,5 +259,39 @@ const main = async(data)=>{
         }
     }
 }
+
+// 主动发送群消息
+const sendGroupMessage = (gid, msg)=>{
+    if (!gid || !msg.length) return
+    msg = encodeURIComponent(msg)
+    let url = `http://172.17.0.2:5700/send_group_msg?group_id=${gid}&message=` + msg
+    http.get(url, ()=>{}).on('error', ()=>{})
+}
+
+// 选手 准备/取消 通知
+// dhs.on('NotifyContestMatchingPlayer', (data)=>{
+//     let gid = findGid(data.contest_id)
+//     let type = data.type == 1 ? ' 已准备' : ' 取消准备'
+//     sendGroupMessage(gid, data.nickname + type)
+// })
+
+// 游戏开始通知
+// dhs.on('NotifyContestGameStart', (data)=>{
+//     let gid = findGid(data.contest_id)
+//     sendGroupMessage(gid, '游戏开始: ' + data.game_uuid)
+// })
+
+// 游戏结束通知
+// dhs.on('NotifyContestGameEnd', (data)=>{
+//     let gid = findGid(data.contest_id)
+//     sendGroupMessage(gid, '游戏结束: ' + data.game_uuid)
+// })
+
+// 公告更新
+// dhs.on('NotifyContestNoticeUpdate', (data)=>{
+//     let gid = findGid(data.contest_id)
+//     let type = ['外部公告', '详细公告', '管理员公告'][data.notice_type - 1]
+//     sendGroupMessage(gid, '赛事' + type + '更新了')
+// })
 
 module.exports = main

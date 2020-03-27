@@ -18,7 +18,7 @@ const searchAccount = async(param)=>{
     return res.search_result
 }
 
-// 增加/删除参赛人员 setting_type:1设定,2增加,3删除 返回例{total: 2, success: 2} ※total:传入的数量，success设置成功的数量
+// 增加/删除参赛人员 setting_type:1设定,2增加,3删除 返回例{total:3,success:2,nicknames:['nick1','nick2']}
 const updateContestPlayer = async(setting_type, eids)=>{
     let searchResult = await searchAccount(eids)
     let account_ids = []
@@ -37,7 +37,7 @@ const updateContestPlayer = async(setting_type, eids)=>{
     )
     if (result.hasOwnProperty('error'))
         return result
-    return {total: eids.split(',').length, success: searchResult.length}
+    return {total: eids.split(',').length, success: searchResult.length, nicknames: nicknames}
 }
 
 // 所有可用api
@@ -98,7 +98,7 @@ const apis = {
         )
     },
 
-    // 查询正在进行的比赛和准备的玩家
+    // 查询正在进行的比赛和准备的玩家 返回{games:[], players:[]}
     startManageGame: async()=>{
         let result = await dhs.sendAsync('startManageGame')
         await dhs.sendAsync('stopManageGame')
@@ -123,48 +123,58 @@ const apis = {
         return await dhs.sendAsync('fetchContestGameRecords', {last_index: last_index})
     },
 
-    // 获得排名列表
+    // 获得排名列表 返回数组
     fetchCurrentRankList: async()=>{
         return await dhs.sendAsync('fetchCurrentRankList')
     },
 
-    // 开赛
+    // 开赛 返回{game_uuid: 'xxxxxx-xxxxxx-xxxxxx-xxxxxx'}
     createContestGame: async(nicknames)=>{
-        let slots = []
-        let players = (await apis.startManageGame()).players
-        nicknames = nicknames.split(',')
-        let added = []
-        for (let v of players) {
-            if (nicknames.includes(v.nickname)) {
-                slots.push({account_id: v.account_id})
-                added.push(v.nickname)
-            }
+        let random_position = true
+        if (nicknames[0] === '!') {
+            random_position = false
+            nicknames = nicknames.substr(1)
         }
+        nicknames = nicknames.split(',')
+        let slots = []
         let absent = []
+        let players = (await apis.startManageGame()).players
+        let i = 0
         for (let v of nicknames) {
-            if (!added.includes(v)) {
-                absent.push(v)
+            let arr = v.replace(')','').split('(')
+            let account_id = arr[0].length > 0 ? arr[0] : 0
+            if (account_id) {
+                for (let vv of players) {
+                    if (vv.nickname === account_id) {
+                        account_id = vv.account_id
+                        break
+                    }
+                    absent.push(account_id)
+                }
             }
+            let tmp = {account_id: account_id, seat: i}
+            if (!isNaN(arr[1]))
+                tmp.start_point = parseInt(arr[1])
+            slots.push(tmp), i++
         }
         if (absent.length)
             return {
                 error: {
-                    'message': '开赛失败。' + absent.toString() + '缺席。',
+                    'message': '开赛失败。' + absent.toString() + ' 缺席。',
                     'code': 8999
                 }
             }
-        let result = await dhs.sendAsync(
+        return await dhs.sendAsync(
             'createContestGame',
             {
                 slots: slots,
                 tag: 'auto',
-                random_position: true,
+                random_position: random_position,
                 open_live: true,
                 chat_broadcast_for_end: true,
                 ai_level: 2
             }
         )
-        return {info: nicknames + ' 开赛成功。'}
     },
 
     // renew
@@ -268,6 +278,7 @@ const start = (account, password, eid, option = {})=>{
     auth.password = password
     auth.eid = eid
     dhs = new MJSoul.DHS(option)
+    dhs.on('error', (e)=>{})
     dhs.open(init)  
 }
 
@@ -276,9 +287,14 @@ const close = (cb)=>{
     callApi('stop', 0, cb)
 }
 
-// 绑定事件
+// 绑定通知事件
 const on = (name, cb)=>{
-    dhs.on(name, cb)
+    dhs.on(name, (data)=>{
+        if (data.unique_id) {
+            data.contest_id = parseInt(Object.keys(contestList).find(k=>contestList[k].unique_id===data.unique_id))
+        }
+        cb(data)
+    })
 }
 
 module.exports.start = start
