@@ -178,16 +178,15 @@ const main = async(data)=>{
                     res += '\n开始日: ' + moment.unix(info.start_time).utcOffset(8).format("YYYY/M/D H:mm")
                     res += '\n结束日: ' + moment.unix(info.finish_time).utcOffset(8).format("YYYY/M/D H:mm")
                     res += '\n自动匹配: ' + (info.auto_match ? '是' : '否')
-                    res += '\n便捷提示: ' + (rule.detail_rule_v2.game_rule.bianjietishi ? '有' : '无')
-                    res += '\n思考时间: ' + ['3+5秒','5+10秒','5+20秒','60+0秒'][rule.thinking_type-1]
+                    let hint = rule.detail_rule_v2.game_rule.bianjietishi ? '有' : '无'
+                    res += '\n思考时间: ' + ['3+5秒','5+10秒','5+20秒','60+0秒'][rule.thinking_type-1] + ` (${hint}便捷提示)`
                     let required_level = rule.detail_rule_v2.extra_rule.required_level
-                    res += '\n段位限制: ' + (required_level ? getRank(required_level) : '无')
+                    if (required_level)
+                        res += '\n段位限制: ' + (required_level ? getRank(required_level) : '无')
                     let max_game_count = rule.detail_rule_v2.extra_rule.max_game_count
                     if (max_game_count)
                         res += '\n局数限制: ' + max_game_count
-                    res += '\n游戏类型: ' + {1:'四人東',2:'四人南',11:'三人東',12:'三人南'}[rule.round_type]
-                    res += '\n食断有无: ' + (rule.shiduan ? '有' : '无')
-                    res += '\n赤宝数量: ' + rule.dora_count + '枚'
+                    res += '\n游戏类型: ' + {1:'四人東',2:'四人南',11:'三人東',12:'三人南'}[rule.round_type] + `, ${rule.shiduan?'有':'无'}食断, ${rule.dora_count}枚赤宝`
                     let detail = rule.detail_rule_v2.game_rule
                     res += '\n初始点数: ' + detail.init_point + '点'
                     res += '\n一位必要: ' + detail.fandian + '点'
