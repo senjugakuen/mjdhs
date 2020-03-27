@@ -35,8 +35,6 @@ const updateContestPlayer = async(setting_type, eids)=>{
             nicknames: nicknames
         }
     )
-    if (result.hasOwnProperty('error'))
-        return result
     return {total: eids.split(',').length, success: searchResult.length, nicknames: nicknames}
 }
 
@@ -125,45 +123,56 @@ const apis = {
 
     // 获得排名列表 返回数组
     fetchCurrentRankList: async()=>{
-        return await dhs.sendAsync('fetchCurrentRankList')
+        return (await dhs.sendAsync('fetchCurrentRankList')).rank_list
     },
 
     // 开赛 返回{game_uuid: 'xxxxxx-xxxxxx-xxxxxx-xxxxxx'}
     createContestGame: async(nicknames)=>{
+
+        // 是否随机座位
         let random_position = true
         if (nicknames[0] === '!') {
             random_position = false
             nicknames = nicknames.substr(1)
         }
+
+        let slots = [] //开赛选手
+        let absent = [] //缺席者
         nicknames = nicknames.split(',')
-        let slots = []
-        let absent = []
-        let players = (await apis.startManageGame()).players
+        let players = (await apis.startManageGame()).players //查找准备中的玩家
+
         let i = 0
         for (let v of nicknames) {
-            let arr = v.replace(')','').split('(')
-            let account_id = arr[0].length > 0 ? arr[0] : 0
+            let arr = v.replace(')','').split('(') //nickname(point) arr[0]是昵称 arr[1]是点数
+            let account_id = arr[0].length > 0 ? arr[0] : 0 //没有昵称的account_id为0，表示电脑
+
+            // 在准备者中用昵称查找account_id，没找到标记为缺席者
             if (account_id) {
-                for (let vv of players) {
-                    if (vv.nickname === account_id) {
-                        account_id = vv.account_id
-                        break
-                    }
+                let player = players.find((player)=>player.nickname === account_id)
+                if (player)
+                    account_id = player.account_id
+                else
                     absent.push(account_id)
-                }
             }
+
             let tmp = {account_id: account_id, seat: i}
-            if (!isNaN(arr[1]))
-                tmp.start_point = parseInt(arr[1])
+            if (!isNaN(arr[1]) && arr[1].length) {
+                //设置点数的时候 点数取100倍数
+                tmp.start_point = Math.floor( parseInt(arr[1]) / 100 ) * 100
+            }
             slots.push(tmp), i++
         }
-        if (absent.length)
+
+        // 有缺席者返回错误
+        if (absent.length) {
             return {
                 error: {
-                    'message': '开赛失败。' + absent.toString() + ' 缺席。',
+                    'message': '开赛失败。 ' + absent.toString() + ' 缺席。',
                     'code': 8999
                 }
             }
+        }
+
         return await dhs.sendAsync(
             'createContestGame',
             {
@@ -302,7 +311,6 @@ module.exports.close = close
 module.exports.callApi = callApi
 module.exports.on = on //start之后才能绑定事件
 
-// start('372914165@qq.com', '552233', 1111)
 // setTimeout(async()=>{
 
 // callApi('fetchCurrentRankList', 917746, (data)=>{

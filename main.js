@@ -3,9 +3,6 @@ const fs = require('fs')
 const moment = require('moment')
 const http = require('http')
 const dhs = require('./dhs')
-const isMaster = (id)=>{
-    return [372914165].includes(id)
-}
 
 // 加载db
 let db = {}
@@ -19,8 +16,12 @@ const saveDbSync = ()=>{
 process.on('exit', saveDbSync)
 
 // 启动
-const eid = 25331349 //70424026
-dhs.start('372914165@qq.com', '552233', eid)
+const config = require('./config')
+dhs.start(config.account, config.password, config.eid)
+
+const isMaster = (id)=>{
+    return config.master.includes(id)
+}
 
 // 安全退出(forever或pm2自动重启)
 const reboot = ()=>{
@@ -41,10 +42,10 @@ const callApi = async(method, cid, param)=>{
 }
 
 const help = `-----dhs指令说明-----
-第①步 在大会室后台将 ${eid}(查询) 设置为比赛管理
+第①步 在大会室后台将 ${config.eid}(查询) 设置为比赛管理
 第②步 使用"dhs绑定 赛事id"指令将qq群和比赛绑定
 第③步 就可以用下面的指令啦!
-  dhs情报 ※查看赛事基本信息和规则
+  dhs规则 ※查看赛事基本信息和规则
   dhs大厅 ※查看大厅中的对局，和准备中的玩家
   dhs名单 / dhs公告 / dhs排名 / dhs刷新
 ★添删选手和开赛等命令群管理才能使用
@@ -56,13 +57,45 @@ const help = `-----dhs指令说明-----
 const kaisai = `-----dhs开赛指令说明-----
 ①一般用法
   dhs开赛 A君,B君,C君,D君
-①设置点数(没名字的是电脑)
+①设置点数
   dhs开赛 A君(5000),B君(5000),C君(5000)
-  dhs开赛 A君(5000),(5000),(5000)
 ③固定東南西北(前面加感叹号)
   dhs开赛 !A君,B君,C君,D君
-※选手不足会自动添加普通电脑
-※暂时只能使用昵称开赛`
+④添加电脑(没名字的就是电脑)
+  dhs开赛 A君,B君,C君,(25000)
+★选手不足会自动添加电脑.
+　电脑若不设置点数，初始为0点
+★暂时只能使用昵称开赛.`
+
+const ranks = ["初心","雀士","雀杰","雀豪","雀圣","魂天"]
+const getRank = id=>{
+    id = id.toString()
+    let res = ranks[id[2]-1] + id[4]
+    return res ===  "魂天1" ? "魂天" : res
+}
+const other_rules = {
+    'have_helezhongju':'和了终局',
+    'have_tingpaizhongju':'听牌终局',
+    'have_helelianzhuang':'和了连庄',
+    'have_tingpailianzhuang':'听牌连庄',
+    'have_yifa':'一发',
+    'have_liujumanguan':'流局满贯',
+    'have_qieshangmanguan':'切上满贯',
+    'have_biao_dora':'表宝牌',
+    'have_gang_biao_dora':'杠表宝牌',
+    'ming_dora_immediately_open':'杠表即开',
+    'have_li_dora':'里宝牌',
+    'have_gang_li_dora':'杠里宝牌',
+    'have_sifenglianda':'四风连打流局',
+    'have_sigangsanle':'四杠散了流局',
+    'have_sijializhi':'四家立直流局',
+    'have_jiuzhongjiupai':'九种九牌流局',
+    'have_sanjiahele':'三家和了流局',
+    'have_toutiao':'头跳',
+    'have_nanruxiru':'南入西入',
+    'disable_multi_yukaman':'多倍役满',
+    'guyi_mode':'古役'
+}
 
 const u = (res)=>{
     let failure = res.total - res.success
@@ -136,24 +169,45 @@ const main = async(data)=>{
                     saveDbSync()
                     return '好了'
                     break
-                case '情報':
-                case '情报':
+                case '規則':
+                case '规则':
                     let info = await callApi('fetchContestInfo', cid)
                     let rule = await callApi('fetchContestGameRule', cid)
-                    res = '[赛事基本信息]'
-                    res += '\n赛事ID: ' + info.contest_id
+                    res = `[赛事ID:${info.contest_id}(${info.open?'公开':'私密'})]`
                     res += '\n赛事名: ' + info.contest_name
-                    res += '\n开始日: ' + moment.unix(info.start_time).utcOffset(8).format("YYYY/M/D HH:mm")
-                    res += '\n结束日: ' + moment.unix(info.finish_time).utcOffset(8).format("YYYY/M/D HH:mm")
-                    res += '\n公开的: ' + (info.open ? '是' : '否')
+                    res += '\n开始日: ' + moment.unix(info.start_time).utcOffset(8).format("YYYY/M/D H:mm")
+                    res += '\n结束日: ' + moment.unix(info.finish_time).utcOffset(8).format("YYYY/M/D H:mm")
                     res += '\n自动匹配: ' + (info.auto_match ? '是' : '否')
-                    res += '\n游戏类型: ' + ['四人東','四人南','三人東','三人南'][rule.round_type-1]
+                    res += '\n便捷提示: ' + (rule.detail_rule_v2.game_rule.bianjietishi ? '有' : '无')
+                    res += '\n思考时间: ' + ['3+5秒','5+10秒','5+20秒','60+0秒'][rule.thinking_type-1]
+                    let required_level = rule.detail_rule_v2.extra_rule.required_level
+                    res += '\n段位限制: ' + (required_level ? getRank(required_level) : '无')
+                    let max_game_count = rule.detail_rule_v2.extra_rule.max_game_count
+                    if (max_game_count)
+                        res += '\n局数限制: ' + max_game_count
+                    res += '\n游戏类型: ' + {1:'四人東',2:'四人南',11:'三人東',12:'三人南'}[rule.round_type]
                     res += '\n食断有无: ' + (rule.shiduan ? '有' : '无')
                     res += '\n赤宝数量: ' + rule.dora_count + '枚'
-                    res += '\n思考时间: ' + ['3+5秒','5+10秒','5+20秒','60+0秒'][rule.thinking_type-1]
-                    res += '\n详细规则: ' + (rule.use_detail_rule ? '默认规则' : '非默认规则')
+                    let detail = rule.detail_rule_v2.game_rule
+                    res += '\n初始点数: ' + detail.init_point + '点'
+                    res += '\n一位必要: ' + detail.fandian + '点'
+                    res += '\n精算原点: ' + detail.jingsuanyuandian + '点'
+                    res += '\n击飞和天边: ' + (detail.can_jifei ? `${detail.tianbian_value}点以下击飞` : '无击飞')
+                    res += '\n立直棒场棒: ' + detail.liqibang_value + '点, ' + detail.changbang_value + '点'
+                    res += '\n顺位马差马: ' + `二位${detail.shunweima_2} 三位${detail.shunweima_3}` + ([1,2].includes(rule.round_type) ? ` 四位${detail.shunweima_4}` : '')
+                    let enabled = [], disabled = []
+                    for (let i in other_rules) {
+                        if (i === 'disable_multi_yukaman')
+                            detail[i] = !detail[i]
+                        if (detail[i])
+                            enabled.push(other_rules[i])
+                        else
+                            disabled.push(other_rules[i])
+                    }
+                    res += '\n关闭的规则: ' + disabled.join(', ')
+                    res += '\n开启的规则: ' + enabled.join(', ')
                     return res
-                    break      
+                    break  
                 case '公告':
                     let notice = await callApi('fetchContestNotice', cid)
                     res = '\n[外部公告]\n'
@@ -189,7 +243,7 @@ const main = async(data)=>{
                         for (let vv of v.players) {
                             players.push(vv.nickname ? vv.nickname : '电脑')
                         }
-                        res += players.join(',') + ' / ' + moment.unix(v.start_time).utcOffset(8).format("HH:mm:ss") + '开始 / ' + v.game_uuid.substr(0, 15) + '\n'
+                        res += players.join(',') + ' / ' + moment.unix(v.start_time).utcOffset(8).format("H:mm:ss") + '开始 / ' + v.game_uuid + '\n'
                     }
                     res += '\n[准备中]\n'
                     if (!lobby.games.players)
@@ -204,6 +258,7 @@ const main = async(data)=>{
                     break
                 case '排名':
                     let rankList = await callApi('fetchCurrentRankList', cid)
+                    return rankList
                     res = '[当前排名]\n'
                     if (!rankList.length)
                         res += '(空)'
@@ -239,13 +294,14 @@ const main = async(data)=>{
                     if (!param)
                         return kaisai
                     res = await callApi('createContestGame', cid, param.replace(/！/g,'!').replace('/（/g','(').replace('/）/g',')'))
-                    return '开赛成功, 游戏编号: ' + res.game_uuid
+                    return '开赛成功。'
                     break
                 default:
                     return help
                     break
             }
         } catch (e) {
+            return e
             let error = e.error
             if (error.code === 9999)
                 return '连接雀魂服务器失败，请再试一次。如果在维护就别试了。'
@@ -265,11 +321,13 @@ const sendGroupMessage = (gid, msg)=>{
     if (!gid || !msg.length) return
     msg = encodeURIComponent(msg)
     let url = `http://172.17.0.2:5700/send_group_msg?group_id=${gid}&message=` + msg
-    http.get(url, ()=>{}).on('error', ()=>{})
+    // http.get(url, ()=>{}).on('error', ()=>{})
 }
 
 // 选手 准备/取消 通知
 // dhs.on('NotifyContestMatchingPlayer', (data)=>{
+//     console.log(data.nickname)
+//     return
 //     let gid = findGid(data.contest_id)
 //     let type = data.type == 1 ? ' 已准备' : ' 取消准备'
 //     sendGroupMessage(gid, data.nickname + type)

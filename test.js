@@ -13,7 +13,7 @@ const a = "917746"
 
 setTimeout(async()=>{
 
-// let result
+let result
 // result = await main({
 //     'message': '1',
 //     'group_id': 123,
@@ -30,7 +30,7 @@ setTimeout(async()=>{
 // console.log(result)
 
 // result = await main({
-//     'message': 'dhs情报',
+//     'message': 'dhs规则',
 //     'group_id': 123,
 //     'sender': {'role':'admin'}
 // })
@@ -65,11 +65,26 @@ setTimeout(async()=>{
 // console.log(result)
 
 // result = await main({
-//     'message': 'dhs开赛 高山',
+//     'message': 'dhs排名',
 //     'group_id': 123,
 //     'sender': {'role':'admin'}
 // })
 // console.log(result)
+
+// result = await main({
+//     'message': 'dhs开赛 高山(111)',
+//     'group_id': 123,
+//     'sender': {'role':'admin'}
+// })
+// console.log(result)
+
+// result = await main({
+//     'message': 'dhs结束 200328-e2971a65-849b-450c-b090-8de7bc6b5f4e',
+//     'group_id': 123,
+//     'sender': {'role':'admin'}
+// })
+// console.log(result)
+
 
 
 
