@@ -194,12 +194,14 @@ const main = async(data)=>{
                     res += '\n自动匹配: ' + (info.auto_match ? '是' : '否')
                     let hint = rule.detail_rule_v2.game_rule.bianjietishi ? '有' : '无'
                     res += '\n思考时间: ' + ['3+5秒','5+10秒','5+20秒','60+0秒'][rule.thinking_type-1] + ` (${hint}便捷提示)`
-                    let required_level = rule.detail_rule_v2.extra_rule.required_level
-                    if (required_level)
-                        res += '\n段位限制: ' + (required_level ? getRank(required_level) : '无')
-                    let max_game_count = rule.detail_rule_v2.extra_rule.max_game_count
-                    if (max_game_count)
-                        res += '\n局数限制: ' + max_game_count
+                    if (rule.detail_rule_v2.extra_rule) {
+                        let required_level = rule.detail_rule_v2.extra_rule.required_level
+                        if (required_level)
+                            res += '\n段位限制: ' + (required_level ? getRank(required_level) : '无')
+                        let max_game_count = rule.detail_rule_v2.extra_rule.max_game_count
+                        if (max_game_count)
+                            res += '\n局数限制: ' + max_game_count
+                    }
                     res += '\n游戏类型: ' + {1:'四人東',2:'四人南',11:'三人東',12:'三人南'}[rule.round_type] + ` / ${rule.shiduan?'有':'无'}食断 / ${rule.dora_count}枚赤宝`
                     let detail = rule.detail_rule_v2.game_rule
                     res += '\n点数设定: ' + `初始${detail.init_point} / 返点${detail.fandian} / 精算${detail.jingsuanyuandian}`
