@@ -351,7 +351,7 @@ const gameStartNotify = []
 // })
 
 // 游戏结束通知
-const gameEndNotify = []
+let gameEndNotify = []
 dhs.on('NotifyContestGameEnd', (data)=>{
     if (gameEndNotify.includes(data.game_uuid))
         return
