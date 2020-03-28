@@ -47,7 +47,9 @@ http.createServer((req, res)=>{
                     return
                 }
             }
-        } catch (e) {}
+        } catch (e) {
+            fs.appendFileSync('err.log', Date() + ' ' + e.stack + '\n')
+        }
         res.writeHead(404)
         res.end()
     })
