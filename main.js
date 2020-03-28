@@ -33,8 +33,11 @@ const reboot = ()=>{
 const callApi = async(method, cid, param)=>{
     return new Promise((resolve, reject)=>{
         dhs.callApi(method, cid, (data)=>{
-            if (data.hasOwnProperty('error'))
+            if (data.hasOwnProperty('error')) {
+                if (data.error.code === 2505)
+                    process.exit(1)
                 reject(data)
+            }
             else
                 resolve(data)
         }, [param])
@@ -340,7 +343,7 @@ const sendGroupMessage = (gid, msg)=>{
 // })
 
 // 游戏开始通知
-let gameStartNotify = []
+// let gameStartNotify = []
 // dhs.on('NotifyContestGameStart', (data)=>{
 //     console.log(data)
 //     if (gameStartNotify.includes(data.game_uuid))
@@ -351,19 +354,19 @@ let gameStartNotify = []
 // })
 
 // 游戏结束通知
-let gameEndNotify = []
-dhs.on('NotifyContestGameEnd', (data)=>{
-    if (gameEndNotify.includes(data.game_uuid))
-        return
-    gameEndNotify.push(data.game_uuid)
-    let gid = findGid(data.contest_id)
-    sendGroupMessage(gid, '游戏结束: ' + data.game_uuid)
-})
+// let gameEndNotify = []
+// dhs.on('NotifyContestGameEnd', (data)=>{
+//     if (gameEndNotify.includes(data.game_uuid))
+//         return
+//     gameEndNotify.push(data.game_uuid)
+//     let gid = findGid(data.contest_id)
+//     sendGroupMessage(gid, '游戏结束: ' + data.game_uuid)
+// })
 
-setInterval(()=>{
-    gameStartNotify = []
-    gameEndNotify = []
-}, 3600000)
+// setInterval(()=>{
+//     gameStartNotify = []
+//     gameEndNotify = []
+// }, 3600000)
 
 // 公告更新
 // dhs.on('NotifyContestNoticeUpdate', (data)=>{
