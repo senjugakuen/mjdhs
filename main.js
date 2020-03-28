@@ -334,8 +334,6 @@ const sendGroupMessage = (gid, msg)=>{
 
 // 选手 准备/取消 通知
 // dhs.on('NotifyContestMatchingPlayer', (data)=>{
-//     console.log(data.nickname)
-//     return
 //     let gid = findGid(data.contest_id)
 //     let type = data.type == 1 ? ' 已准备' : ' 取消准备'
 //     sendGroupMessage(gid, data.nickname + type)
@@ -343,13 +341,14 @@ const sendGroupMessage = (gid, msg)=>{
 
 // 游戏开始通知
 const gameStartNotify = []
-dhs.on('NotifyContestGameStart', (data)=>{
-    if (gameStartNotify.includes(data.game_uuid))
-        return
-    gameStartNotify.push(data.game_uuid)
-    let gid = findGid(data.contest_id)
-    sendGroupMessage(gid, '游戏开始: ' + data.game_uuid)
-})
+// dhs.on('NotifyContestGameStart', (data)=>{
+//     console.log(data)
+//     if (gameStartNotify.includes(data.game_uuid))
+//         return
+//     gameStartNotify.push(data.game_uuid)
+//     let gid = findGid(data.contest_id)
+//     sendGroupMessage(gid, '游戏开始: ' + data.game_uuid)
+// })
 
 // 游戏结束通知
 const gameEndNotify = []
