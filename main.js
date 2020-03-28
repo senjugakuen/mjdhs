@@ -340,7 +340,7 @@ const sendGroupMessage = (gid, msg)=>{
 // })
 
 // 游戏开始通知
-const gameStartNotify = []
+let gameStartNotify = []
 // dhs.on('NotifyContestGameStart', (data)=>{
 //     console.log(data)
 //     if (gameStartNotify.includes(data.game_uuid))
