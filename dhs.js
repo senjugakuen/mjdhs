@@ -259,10 +259,6 @@ const checkQueue = async()=>{
                         e.error.message = '自动匹配模式下不能手动开赛。'
                         result = e
                     }
-                    if (e.error.code === 2505) {
-                        e.error.message = '暂时无法登录大会室后台。'
-                        result = e
-                    }
                     result = e
                 }
             }

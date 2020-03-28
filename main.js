@@ -24,18 +24,18 @@ const isMaster = (id)=>{
 }
 
 // 安全退出(forever或pm2自动重启)
-const reboot = ()=>{
-    new Promise((resolve, reject)=>{
+const reboot = async()=>{
+    return new Promise((resolve, reject)=>{
         dhs.close(()=>resolve())
-    }).then(()=>process.exit(1))
+    })
 }
 
 const callApi = async(method, cid, param)=>{
     return new Promise((resolve, reject)=>{
         dhs.callApi(method, cid, (data)=>{
             if (data.hasOwnProperty('error')) {
-                if (data.error.code === 2505)
-                    process.exit(1)
+                if (!data.error.message)
+                    fs.appendFileSync('err.log', Date() + ' Error.code: ' + data.error.code + '\n')
                 reject(data)
             }
             else
@@ -50,7 +50,7 @@ const help = `-----dhs指令说明-----
 第③步 就可以用下面的指令啦!
   dhs规则 ※查看赛事基本信息和规则
   dhs大厅 ※查看大厅中的对局，和准备中的玩家
-  dhs名单 / dhs公告 / dhs排名 / dhs刷新
+  dhs名单 / dhs公告 / dhs排名 / dhs待机 / dhs刷新
 ★添删选手和开赛等命令群管理员才能使用
   dhs开赛 ※原样输入查看详细用法 
   dhs添加 / dhs删除 / dhs重置 
@@ -131,8 +131,8 @@ const main = async(data)=>{
         return
     let cmd = data.message.substr(3, 2)
     if (isMaster(data.user_id) && cmd === '重启') {
-        reboot()
-        return '好的'
+        await reboot()
+        return 'reboot'
     }
     if (cmd === '' || cmd === '帮助')
         return help
@@ -223,7 +223,7 @@ const main = async(data)=>{
                     let notice = await callApi('fetchContestNotice', cid)
                     res = '\n[外部公告]\n'
                     res += notice[0]
-                    res += '\n\n[详细公告]\n'
+                    res += '\n[详细公告]\n'
                     res += notice[1]
                     return res
                     break
@@ -262,6 +262,20 @@ const main = async(data)=>{
                     {
                         let players = []
                         for (let v of lobby.players)
+                            players.push(v.nickname)
+                        res += players.join(',')
+                    }
+                    return res
+                    break
+                case '待機':
+                case '待机':
+                    let waitings = (await callApi('startManageGame', cid)).players
+                    res += '[准备中]\n'
+                    if (!waitings.length)
+                        res += '(无)\n'
+                    {
+                        let players = []
+                        for (let v of waitings)
                             players.push(v.nickname)
                         res += players.join(',')
                     }
@@ -320,6 +334,8 @@ const main = async(data)=>{
                 return '响应超时，可能已经执行成功。'
             if (error.message)
                 return error.message
+            if (error.code === 2505)
+                return 'reboot'
             if (debug)
                 return e
             return '执行失败。命令前加"-"可查看debug信息。'
