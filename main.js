@@ -243,7 +243,7 @@ const main = async(data)=>{
                         res += players.join(',') + ' / ' + moment.unix(v.start_time).utcOffset(8).format("H:mm:ss") + '开始 / ' + v.game_uuid + '\n'
                     }
                     res += '\n[准备中]\n'
-                    if (!lobby.games.players)
+                    if (!lobby.players.length)
                         res += '(无)\n'
                     {
                         let players = []
