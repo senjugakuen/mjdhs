@@ -40,7 +40,7 @@ http.createServer((req, res)=>{
             if (data.post_type === 'message') {
                 let result = await main(data)
                 if (result) {
-                    let msg = result === 'reboot'？ '请3秒后再试一次' : result
+                    let msg = result === 'reboot' ? '请3秒后再试一次' : result
                     res.end(JSON.stringify({'reply': typeof msg === 'string' ? msg : JSON.stringify(msg)}))
                     if (result === 'reboot')
                         process.exit(1)
