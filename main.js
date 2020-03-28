@@ -55,13 +55,15 @@ const help = `-----dhs指令说明-----
   dhs绑定 赛事id / dhs解绑`
 
 const kaisai = `-----dhs开赛指令说明-----
-①一般用法
+①一般用法例
   dhs开赛 A君,B君,C君,D君
-①设置点数
+②设置点数例
   dhs开赛 A君(5000),B君(5000),C君(5000)
-③固定東南西北(前面加感叹号)
+③设置标签例(最右侧添加: |标签)
+  dhs开赛 A君,B君,C君,D君|tag
+④固定東南西北(前面加感叹号)
   dhs开赛 !A君,B君,C君,D君
-④添加电脑(没名字的就是电脑)
+⑤添加电脑(没名字的就是电脑)
   dhs开赛 A君,B君,C君,(25000)
 ★选手不足会自动添加电脑.
 　电脑若不设置点数，初始为0点
@@ -289,7 +291,8 @@ const main = async(data)=>{
                 case '开赛':
                     if (!param)
                         return kaisai
-                    res = await callApi('createContestGame', cid, param.replace(/！/g,'!').replace('/（/g','(').replace('/）/g',')'))
+                    param = param.replace(/！/g,'!').replace(/（/g,'(').replace(/）/g,')').replace(/｜/g,'|')
+                    res = await callApi('createContestGame', cid, param)
                     return '开赛成功。'
                     break
                 default:

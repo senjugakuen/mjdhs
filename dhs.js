@@ -136,6 +136,12 @@ const apis = {
             nicknames = nicknames.substr(1)
         }
 
+        // 获得tag
+        let abc = nicknames.split('|')
+        nicknames = abc[0]
+        let tag = abc[1] ? abc[1] : 'auto'
+
+
         let slots = [] //开赛选手
         let absent = [] //缺席者
         nicknames = nicknames.split(',')
@@ -177,7 +183,7 @@ const apis = {
             'createContestGame',
             {
                 slots: slots,
-                tag: 'auto',
+                tag: tag,
                 random_position: random_position,
                 open_live: true,
                 chat_broadcast_for_end: true,
