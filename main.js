@@ -54,13 +54,10 @@ const help = `-----dhs指令说明-----
 ★添删选手和开赛等命令群管理员才能使用
   dhs开赛 ※原样输入查看详细用法 
   dhs添加 / dhs删除 / dhs重置 
-※例: "dhs添加 id1,id2"
-※可以用换行代替逗号，比如:
-dhs添加
-id1
-id2
+  ※例: "dhs添加 id1,id2"
+  ※可以用换行来分隔每个id
 ★绑定和解绑命令
-dhs绑定 赛事id / dhs解绑`
+  dhs绑定 赛事id / dhs解绑`
 
 const kaisai = `-----dhs开赛指令说明-----
 ①一般用法例
