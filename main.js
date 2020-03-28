@@ -255,7 +255,6 @@ const main = async(data)=>{
                     break
                 case '排名':
                     let rankList = await callApi('fetchCurrentRankList', cid)
-                    return rankList
                     res = '[当前排名]\n'
                     if (!rankList.length)
                         res += '(空)'
