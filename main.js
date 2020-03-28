@@ -48,18 +48,23 @@ const help = `-----dhs指令说明-----
   dhs规则 ※查看赛事基本信息和规则
   dhs大厅 ※查看大厅中的对局，和准备中的玩家
   dhs名单 / dhs公告 / dhs排名 / dhs刷新
-★添删选手和开赛等命令群管理才能使用
-  dhs添加 / dhs删除 / dhs重置 
-    ※例: "dhs添加 id1,id2" (只能用数字id
+★添删选手和开赛等命令群管理员才能使用
   dhs开赛 ※原样输入查看详细用法 
-  dhs绑定 赛事id / dhs解绑`
+  dhs添加 / dhs删除 / dhs重置 
+※例: "dhs添加 id1,id2"
+※可以用换行代替逗号，比如:
+dhs添加
+id1
+id2
+★绑定和解绑命令
+dhs绑定 赛事id / dhs解绑`
 
 const kaisai = `-----dhs开赛指令说明-----
 ①一般用法例
   dhs开赛 A君,B君,C君,D君
 ②设置点数例
   dhs开赛 A君(5000),B君(5000),C君(5000)
-③设置标签例(最右侧添加: |标签)
+③设置标签例(在最后添加:|标签)
   dhs开赛 A君,B君,C君,D君|tag
 ④固定東南西北(前面加感叹号)
   dhs开赛 !A君,B君,C君,D君
@@ -67,7 +72,11 @@ const kaisai = `-----dhs开赛指令说明-----
   dhs开赛 A君,B君,C君,(25000)
 ★选手不足会自动添加电脑.
 　电脑若不设置点数，初始为0点
-★暂时只能使用昵称开赛.`
+★可以用换行代替逗号，比如:
+dhs开赛
+A君(5000)
+B君(5000)
+C君(5000)|tag`
 
 const ranks = ["初心","雀士","雀杰","雀豪","雀圣","魂天"]
 const getRank = id=>{
@@ -117,21 +126,21 @@ const main = async(data)=>{
     }
     if (data.message.substr(0, 3).toLowerCase() !== 'dhs')
         return
-    let parmas = data.message.trim().split(' ')
-    let cmd = parmas.shift().substr(3).trim()
+    let cmd = data.message.substr(3, 2)
     if (isMaster(data.user_id) && cmd === '重启') {
         reboot()
         return '好的'
     }
-    let param = parmas.join("").replace(/，/g, ',')
+    if (cmd === '' || cmd === '帮助')
+        return help
+
+    let param = data.message.substr(5).trim().replace(/(\r\n|\n|\r|,)/g,',').replace(/\s/g, '')
     let gid = data.group_id
-    if (!gid) return '暂时不支持私聊'
+    if (!gid) return 'dhs各指令暂时不支持私聊'
     let isAdmin = ['owner', 'admin'].includes(data.sender.role)
     let cid = 0
     if (db[gid]) cid = db[gid]
-    if (cmd === '' || cmd === '帮助')
-        return help
-    else if (!cid && cmd !== '绑定')
+    if (!cid && cmd !== '绑定')
         return '尚未绑定比赛。需要帮助输入: dhs'
     else {
         if (!isAdmin && ['綁定', '绑定', '解綁', '解绑', '添加', '删除', '重置', '开赛', '開賽'].includes(cmd))
@@ -271,6 +280,7 @@ const main = async(data)=>{
                     if (!param)
                         return '请输入ID'
                     res = await callApi('addContestPlayer', cid, param)
+                    console.log(res)
                     return '添加' + u(res)
                     break
                 case '删除':
