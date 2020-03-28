@@ -329,7 +329,7 @@ const sendGroupMessage = (gid, msg)=>{
     if (!gid || !msg.length) return
     msg = encodeURIComponent(msg)
     let url = `http://172.17.0.2:5700/send_group_msg?group_id=${gid}&message=` + msg
-    // http.get(url, ()=>{}).on('error', ()=>{})
+    http.get(url, ()=>{}).on('error', ()=>{})
 }
 
 // 选手 准备/取消 通知
@@ -342,16 +342,29 @@ const sendGroupMessage = (gid, msg)=>{
 // })
 
 // 游戏开始通知
-// dhs.on('NotifyContestGameStart', (data)=>{
-//     let gid = findGid(data.contest_id)
-//     sendGroupMessage(gid, '游戏开始: ' + data.game_uuid)
-// })
+const gameStartNotify = []
+dhs.on('NotifyContestGameStart', (data)=>{
+    if (gameStartNotify.includes(data.game_uuid))
+        return
+    gameStartNotify.push(data.game_uuid)
+    let gid = findGid(data.contest_id)
+    sendGroupMessage(gid, '游戏开始: ' + data.game_uuid)
+})
 
 // 游戏结束通知
-// dhs.on('NotifyContestGameEnd', (data)=>{
-//     let gid = findGid(data.contest_id)
-//     sendGroupMessage(gid, '游戏结束: ' + data.game_uuid)
-// })
+const gameEndNotify = []
+dhs.on('NotifyContestGameEnd', (data)=>{
+    if (gameEndNotify.includes(data.game_uuid))
+        return
+    gameEndNotify.push(data.game_uuid)
+    let gid = findGid(data.contest_id)
+    sendGroupMessage(gid, '游戏结束: ' + data.game_uuid)
+})
+
+setInterval(()=>{
+    gameStartNotify = []
+    gameEndNotify = []
+}, 3600000)
 
 // 公告更新
 // dhs.on('NotifyContestNoticeUpdate', (data)=>{
