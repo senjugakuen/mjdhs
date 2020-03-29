@@ -17,7 +17,7 @@ process.on('exit', saveDbSync)
 
 // 启动
 const config = require('./config')
-dhs.start(config.account, config.password, config.eid)
+dhs.start(config.account, config.password)
 
 const isMaster = (id)=>{
     return config.master.includes(id)
@@ -33,11 +33,8 @@ const reboot = async()=>{
 const callApi = async(method, cid, param)=>{
     return new Promise((resolve, reject)=>{
         dhs.callApi(method, cid, (data)=>{
-            if (data.hasOwnProperty('error')) {
-                if (!data.error.message)
-                    fs.appendFileSync('err.log', Date() + ' Error.code: ' + data.error.code + '\n')
+            if (data.hasOwnProperty('error'))
                 reject(data)
-            }
             else
                 resolve(data)
         }, [param])
@@ -334,17 +331,22 @@ const main = async(data)=>{
         } catch (e) {
             if (!e.error) {
                 fs.appendFileSync('err.log', Date() + ' ' + e.stack + '\n')
-                return '程序出错了。'
+                return '未知错误。'
             }
             let error = e.error
             if (error.code === 9999)
                 return '连接雀魂服务器失败，请再试一次。如果在维护就别试了。'
             if (error.code === 9997)
                 return '响应超时，可能已经执行成功。'
-            if (error.message)
-                return error.message
+            if (error.code === 9000 || error.code === 2501)
+                return `没有赛事${error.cid}的管理权限，请把 ${config.eid} 添加为赛事管理。`
             if (error.code === 2505)
                 return 'reboot'
+            if (error.code === 2521)
+                return '自动匹配模式下不能手动开赛。'
+            if (error.code === 1203)
+                return '游戏编号错误。'
+            fs.appendFileSync('err.log', Date() + ' Error.code: ' + error.code + '\n')
             if (debug)
                 return e
             return '执行失败。命令前加"-"可查看debug信息。'

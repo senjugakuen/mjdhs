@@ -3,8 +3,7 @@ const MJSoul = require('mjsoul')
 let dhs = null
 let auth = {
     account: '',
-    password: '',
-    eid: '' //雀魂eid
+    password: ''
 }
 let contestList = {}
 let taskQueue = []
@@ -255,17 +254,12 @@ const checkQueue = async()=>{
             task.callback()
             break
         }
-        let result
+        let result = {}
         try {
             if (!contestList.hasOwnProperty(task.contest_id))
                 await fetchRelatedContestList()
             if (!contestList.hasOwnProperty(task.contest_id))
-                result = {
-                    'error': {
-                        'message': `没有赛事${task.contest_id}的管理权限，请把 ${auth.eid} 添加为赛事管理。添加后尽快绑定。`,
-                        'code': 9000
-                    }
-                }
+                result.error = {code: 9000, cid: task.contest_id}
             else {
                 if (currentContestId != task.contest_id) {
                     if (currentContestId)
@@ -277,21 +271,11 @@ const checkQueue = async()=>{
                     )
                 }
                 currentContestId = task.contest_id
-                try {
-                    result = await apis[task.name].apply(null, task.params)
-                } catch (e) {
-                    if (e.error.code === 2521) {
-                        e.error.message = '自动匹配模式下不能手动开赛。'
-                        result = e
-                    }
-                    if (e.error.code === 1203) {
-                        e.error.message = '游戏编号错误。'
-                        result = e
-                    }
-                    result = e
-                }
+                result = await apis[task.name].apply(null, task.params)
             }
         } catch (e) {
+            if (e.error.code === 2501)
+                e.error.cid = task.contest_id
             result = e
         }
         task.callback(result)
@@ -313,10 +297,9 @@ const init = async()=>{
 }
 
 // 启动函数
-const start = (account, password, eid, option = {})=>{
+const start = (account, password, option = {})=>{
     auth.account = account
     auth.password = password
-    auth.eid = eid
     dhs = new MJSoul.DHS(option)
     dhs.on('error', (e)=>{})
     dhs.open(init)  
@@ -344,8 +327,13 @@ module.exports.on = on //start之后才能绑定事件
 
 // setTimeout(async()=>{
 
-// callApi('fetchCurrentRankList', 917746, (data)=>{
-//     console.log(data)
-// })
+// let result
+// try {
+//     result = await dhs.sendAsync('manageContest', {unique_id: 123456})
+//     result = await dhs.sendAsync('fetchContestGameRule', {unique_id: 123456})
+// } catch (e) {
+//     result = e
+// }
+// console.log(result)
 
 // },4000) 

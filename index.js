@@ -34,21 +34,17 @@ http.createServer((req, res)=>{
     let data = []
     req.on('data', (d)=>data.push(d))
     req.on('end', async()=>{
-        try {
-            data = Buffer.concat(data).toString()
-            data = JSON.parse(data)
-            if (data.post_type === 'message') {
-                let result = await main(data)
-                if (result) {
-                    let msg = result === 'reboot' ? '请3秒后再试一次' : result
-                    res.end(JSON.stringify({'reply': typeof msg === 'string' ? msg : JSON.stringify(msg)}))
-                    if (result === 'reboot')
-                        process.exit(1)
-                    return
-                }
+        data = Buffer.concat(data).toString()
+        data = JSON.parse(data)
+        if (data.post_type === 'message') {
+            let result = await main(data)
+            if (result) {
+                let msg = result === 'reboot' ? '请3秒后再试一次' : result
+                res.end(JSON.stringify({'reply': typeof msg === 'string' ? msg : JSON.stringify(msg)}))
+                if (result === 'reboot')
+                    process.exit(1)
+                return
             }
-        } catch (e) {
-            fs.appendFileSync('err.log', Date() + ' ' + e.stack + '\n')
         }
         res.writeHead(404)
         res.end()
