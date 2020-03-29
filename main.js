@@ -349,7 +349,7 @@ const main = async(data)=>{
             fs.appendFileSync('err.log', Date() + ' Error.code: ' + error.code + '\n')
             if (debug)
                 return e
-            return '执行失败。命令前加"-"可查看debug信息。'
+            return `执行失败(错误码:${error.code})。`
         }
     }
 }
