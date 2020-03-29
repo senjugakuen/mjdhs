@@ -50,33 +50,28 @@ const help = `-----dhs指令说明-----
 第③步 就可以用下面的指令啦!
   dhs规则 ※查看赛事基本信息和规则
   dhs大厅 ※查看大厅中的对局，和准备中的玩家
-  dhs名单 / dhs公告 / dhs排名 / dhs待机 / dhs刷新
-★添删选手和开赛等命令群管理员才能使用
-  dhs开赛 ※原样输入查看详细用法 
+  dhs名单 / dhs待机 / dhs排名 / dhs公告 / dhs刷新
+★开赛、终止比赛、添删选手等命令(群管理员限定)
+  dhs开赛 ※原样输入查看详细用法
+  dhs终止 游戏编号 ※立刻终止一个游戏
   dhs添加 / dhs删除 / dhs重置 
   ※例: "dhs添加 id1,id2"
-  ※可以用换行来分隔每个id
-★绑定和解绑命令
+  ※支持用换行来分隔每个id
+★绑定和解绑命令(群管理员限定)
   dhs绑定 赛事id / dhs解绑`
 
 const kaisai = `-----dhs开赛指令说明-----
+★规约: 半角逗号分隔每个选手, 空格分隔选手和点数
 ①一般用法例
-  dhs开赛 A君,B君,C君,D君
+  dhs开赛 A君, B君, C君
 ②设置点数例
-  dhs开赛 A君(5000),B君(5000),C君(5000)
-③设置标签例(在最后添加:|标签)
-  dhs开赛 A君,B君,C君,D君|tag
-④固定東南西北(前面加感叹号)
-  dhs开赛 !A君,B君,C君,D君
-⑤添加电脑(没名字的就是电脑)
-  dhs开赛 A君,B君,C君,(25000)
-★选手不足会自动添加电脑.
-　电脑若不设置点数，初始为0点
-★可以用换行代替逗号，比如:
-dhs开赛
-A君(5000)
-B君(5000)
-C君(5000)|tag`
+  dhs开赛 A君 500, B君 500, C君 500
+③添加电脑例(没名字的就是电脑)
+  dhs开赛 A君 500, B君 500, 500
+　※选手不足自动添加电脑
+④支持用换行分隔每个选手
+⑤固定東南西北法: 在第一个选手前添加"!"
+⑥设置标签法: 在最后添加"||tag"`
 
 const ranks = ["初心","雀士","雀杰","雀豪","雀圣","魂天"]
 const getRank = id=>{
@@ -134,7 +129,7 @@ const main = async(data)=>{
     if (cmd === '' || cmd === '帮助')
         return help
 
-    let param = data.message.substr(5).trim().replace(/(\r\n|\n|\r|,)/g,',').replace(/\s/g, '')
+    let param = data.message.substr(5).trim().replace(/(\r\n|\n|\r)/g,',')
     let gid = data.group_id
     if (!gid) return 'dhs各指令暂时不支持私聊'
     let isAdmin = ['owner', 'admin'].includes(data.sender.role)
@@ -317,9 +312,15 @@ const main = async(data)=>{
                 case '开赛':
                     if (!param)
                         return kaisai
-                    param = param.replace(/！/g,'!').replace(/（/g,'(').replace(/）/g,')').replace(/｜/g,'|')
                     res = await callApi('createContestGame', cid, param)
                     return '开赛成功。'
+                    break
+                case '終止':
+                case '终止':
+                    if (!param)
+                        return '请输入游戏编号'
+                    res = await callApi('terminateGame', cid, param)
+                    return '游戏已终止。 编号: ' + param
                     break
                 default:
                     return help

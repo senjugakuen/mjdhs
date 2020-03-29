@@ -72,20 +72,25 @@ let result
 // console.log(result)
 
 // result = await main({
-//     'message': 'dhs开赛 高山(111)',
+//     'message': 'dhs开赛 高山 5000',
 //     'group_id': 123,
 //     'sender': {'role':'admin'}
 // })
 // console.log(result)
 
 // result = await main({
-//     'message': 'dhs结束 200328-e2971a65-849b-450c-b090-8de7bc6b5f4e',
+//     'message': 'dhs大厅',
 //     'group_id': 123,
 //     'sender': {'role':'admin'}
 // })
 // console.log(result)
 
-
+// result = await main({
+//     'message': 'dhs终止 200329-194ccb7b-40de-4669-bf43-c179cabe01ff',
+//     'group_id': 123,
+//     'sender': {'role':'admin'}
+// })
+// console.log(result)
 
 
 

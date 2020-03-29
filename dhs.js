@@ -111,7 +111,7 @@ const apis = {
     resumeGame: async(uuid)=>{
         return await dhs.sendAsync('resumeGame', {uuid: uuid})
     },
-    // 终止比赛 (提示wrong api name，原因不明)
+    // 终止比赛
     terminateGame: async(uuid)=>{
         return await dhs.sendAsync('terminateGame', {uuid: uuid})
     },
@@ -137,7 +137,7 @@ const apis = {
         }
 
         // 获得tag
-        let abc = nicknames.split('|')
+        let abc = nicknames.split('||')
         nicknames = abc[0]
         let tag = abc[1] ? abc[1] : 'auto'
 
@@ -149,11 +149,25 @@ const apis = {
 
         let i = 0
         for (let v of nicknames) {
-            let arr = v.replace(')','').split('(') //nickname(point) arr[0]是昵称 arr[1]是点数
-            let account_id = arr[0].length > 0 ? arr[0] : 0 //没有昵称的account_id为0，表示电脑
+            if (!v.length) continue
+            let arr = v.trim().split(' ') //nickname(point) arr[0]是昵称 arr[1]是点数
+            let account_id = 0
+            let start_point = 0
+            if (arr.length === 1) {
+                if (slots[0] && slots[0].start_point !== undefined) {
+                    account_id = 0
+                    start_point = arr.shift()
+                } else {
+                    account_id = arr.shift()
+                    start_point = undefined
+                }
+            } else {
+                account_id = arr.shift()
+                start_point = arr.pop()
+            }
 
             // 在准备者中用昵称查找account_id，没找到标记为缺席者
-            if (account_id) {
+            if (typeof account_id === 'string') {
                 let player = players.find((player)=>player.nickname === account_id)
                 if (player)
                     account_id = player.account_id
@@ -162,9 +176,9 @@ const apis = {
             }
 
             let tmp = {account_id: account_id, seat: i}
-            if (!isNaN(arr[1]) && arr[1].length) {
+            if (!isNaN(start_point) && start_point.length) {
                 //设置点数的时候 点数取100倍数
-                tmp.start_point = Math.floor( parseInt(arr[1]) / 100 ) * 100
+                tmp.start_point = Math.floor( parseInt(start_point) / 100 ) * 100
             }
             slots.push(tmp), i++
         }
@@ -176,6 +190,24 @@ const apis = {
                     'message': '开赛失败。 ' + absent.toString() + ' 缺席。',
                     'code': 8999
                 }
+            }
+        }
+
+        // 人数不足时添加电脑
+        if (slots.length < 4) {
+            let rule = await apis.fetchContestGameRule() //查询规则
+            let playerCount = [1,2].includes(rule.round_type) ? 4 : 3
+            console.log(rule.round_type, typeof rule.round_type)
+            console.log(playerCount)
+            let minus = playerCount - slots.length
+            while (minus > 0) {
+                minus--
+                let tmp = {
+                    account_id: 0,
+                    start_point: rule.init_point,
+                    seat: i
+                }
+                slots.push(tmp), i++
             }
         }
 
@@ -257,6 +289,10 @@ const checkQueue = async()=>{
                 } catch (e) {
                     if (e.error.code === 2521) {
                         e.error.message = '自动匹配模式下不能手动开赛。'
+                        result = e
+                    }
+                    if (e.error.code === 1203) {
+                        e.error.message = '游戏编号错误。'
                         result = e
                     }
                     result = e

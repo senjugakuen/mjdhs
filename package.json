@@ -23,7 +23,7 @@
   "homepage": "https://github.com/takayama-lily/dhs#readme",
   "dependencies": {
     "https-proxy-agent": "^5.0.0",
-    "mjsoul": "^2.0.4",
+    "mjsoul": "^2.0.5",
     "moment": "^2.24.0"
   }
 }
