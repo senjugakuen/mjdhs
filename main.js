@@ -328,7 +328,7 @@ const main = async(data)=>{
                     return '游戏已终止。 编号: ' + param
                     break
                 default:
-                    return help
+                    return '指令不正确。需要帮助输入: dhs'
                     break
             }
         } catch (e) {
