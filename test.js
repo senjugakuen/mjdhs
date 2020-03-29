@@ -72,7 +72,7 @@ let result
 // console.log(result)
 
 // result = await main({
-//     'message': 'dhs开赛 高山 5000',
+//     'message': 'dhs开赛 高山||sss',
 //     'group_id': 123,
 //     'sender': {'role':'admin'}
 // })

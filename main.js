@@ -313,7 +313,12 @@ const main = async(data)=>{
                     if (!param)
                         return kaisai
                     res = await callApi('createContestGame', cid, param)
-                    return '开赛成功。'
+                    let tag = param.split('||')[1]
+                    tag = tag ? tag : ''
+                    if (res.result)
+                        return `${tag}开赛成功。`
+                    else
+                        return `${tag}开赛失败。 ${res.absent} 缺席。`
                     break
                 case '終止':
                 case '终止':

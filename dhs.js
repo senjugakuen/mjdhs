@@ -126,7 +126,7 @@ const apis = {
         return (await dhs.sendAsync('fetchCurrentRankList')).rank_list
     },
 
-    // 开赛 返回{game_uuid: 'xxxxxx-xxxxxx-xxxxxx-xxxxxx'}
+    // 开赛 返回{result: Boolean, absent: Array}
     createContestGame: async(nicknames)=>{
 
         // 是否随机座位
@@ -142,12 +142,12 @@ const apis = {
         let tag = abc[1] ? abc[1] : 'auto'
 
 
-        let slots = [] //开赛选手
+        let slots = [] //选手
         let absent = [] //缺席者
         nicknames = nicknames.split(',')
         let players = (await apis.startManageGame()).players //查找准备中的玩家
 
-        let i = 0
+        let seat = 0
         for (let v of nicknames) {
             if (!v.length) continue
             let arr = v.trim().split(' ') //nickname(point) arr[0]是昵称 arr[1]是点数
@@ -175,43 +175,35 @@ const apis = {
                     absent.push(account_id)
             }
 
-            let tmp = {account_id: account_id, seat: i}
+            let tmp = {account_id: account_id, seat: seat}
             if (!isNaN(start_point) && start_point.length) {
                 //设置点数的时候 点数取100倍数
                 tmp.start_point = Math.floor( parseInt(start_point) / 100 ) * 100
             }
-            slots.push(tmp), i++
+            slots.push(tmp), seat++
         }
 
         // 有缺席者返回错误
-        if (absent.length) {
-            return {
-                error: {
-                    'message': '开赛失败。 ' + absent.toString() + ' 缺席。',
-                    'code': 8999
-                }
-            }
-        }
+        if (absent.length)
+            return {result: false, absent: absent}
 
         // 人数不足时添加电脑
         if (slots.length < 4) {
-            let rule = await apis.fetchContestGameRule() //查询规则
+            let rule = await apis.fetchContestGameRule()
             let playerCount = [1,2].includes(rule.round_type) ? 4 : 3
-            console.log(rule.round_type, typeof rule.round_type)
-            console.log(playerCount)
             let minus = playerCount - slots.length
             while (minus > 0) {
                 minus--
                 let tmp = {
                     account_id: 0,
                     start_point: rule.init_point,
-                    seat: i
+                    seat: seat
                 }
-                slots.push(tmp), i++
+                slots.push(tmp), seat++
             }
         }
 
-        return await dhs.sendAsync(
+        await dhs.sendAsync(
             'createContestGame',
             {
                 slots: slots,
@@ -222,6 +214,7 @@ const apis = {
                 ai_level: 2
             }
         )
+        return {result: true}
     },
 
     // renew
