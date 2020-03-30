@@ -128,7 +128,7 @@ const main = async(data)=>{
 
     let param = data.message.substr(5).trim().replace(/(\r\n|\n|\r)/g,',')
     let gid = data.group_id
-    if (!gid) return 'dhs各指令暂时不支持私聊'
+    if (!gid) return 'dhs各指令只能在群里使用'
     let isAdmin = ['owner', 'admin'].includes(data.sender.role)
     let cid = 0
     if (db[gid]) cid = db[gid]
