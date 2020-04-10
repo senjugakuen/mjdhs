@@ -12,8 +12,7 @@ let currentContestId = 0
 
 const searchAccount = async(param)=>{
     let eids = param.toString().split(',')
-    let res
-    res = await dhs.sendAsync('searchAccountByEid', {eids: eids})
+    let res = await dhs.sendAsync('searchAccountByEid', {eids: eids})
     return res.search_result
 }
 
@@ -262,15 +261,15 @@ const checkQueue = async()=>{
                 result.error = {code: 9000, cid: task.contest_id}
             else {
                 if (currentContestId != task.contest_id) {
-                    if (currentContestId)
+                    if (currentContestId > 0)
                         await dhs.sendAsync('exitManageContest')
                     let unique_id = contestList[task.contest_id].unique_id
                     await dhs.sendAsync(
                         'manageContest',
                         {unique_id: unique_id}
                     )
+                    currentContestId = task.contest_id
                 }
-                currentContestId = task.contest_id
                 result = await apis[task.name].apply(null, task.params)
             }
         } catch (e) {
@@ -302,6 +301,9 @@ const start = (account, password, option = {})=>{
     auth.password = password
     dhs = new MJSoul.DHS(option)
     dhs.on('error', (e)=>{})
+    dhs.on('close', ()=>{
+        currentContestId = 0
+    })
     dhs.open(init)  
 }
 
