@@ -37,6 +37,12 @@ http.createServer((req, res)=>{
         data = Buffer.concat(data).toString()
         data = JSON.parse(data)
         if (data.post_type === 'message') {
+            let message = ""
+            for (let v of data.message) {
+                if (v.type === "text")
+                    message += v.data.text
+            }
+            data.message = message
             let result = await main(data)
             if (result) {
                 let msg = result === 'reboot' ? '请3秒后再试一次' : result
