@@ -17,7 +17,7 @@ process.on('exit', saveDbSync)
 
 // 启动
 const config = require('./config')
-dhs.start(config.account, config.password)
+dhs.start(config.account, config.password, {url: 'wss://gateway-v2.majsoul.com:6001'})
 
 const isMaster = (id)=>{
     return config.master.includes(id)
