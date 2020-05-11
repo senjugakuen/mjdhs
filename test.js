@@ -1,14 +1,5 @@
 'use strict'
 const main = require('./main')
-// let agent = null
-// const url = require('url')
-// const HttpsProxyAgent = require('https-proxy-agent')
-// agent = new HttpsProxyAgent(url.parse('http://b051925:lw58613669CP@10.39.74.38:50080'))
-// process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0
-// const dhs = new MJSoul.DHS({
-//     wsOption: {agent: agent}
-// })
-
 const a = "917746"
 
 setTimeout(async()=>{
