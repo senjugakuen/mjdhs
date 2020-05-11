@@ -3,6 +3,16 @@ const fs = require('fs')
 const moment = require('moment')
 const http = require('http')
 const dhs = require('./dhs')
+const config = require('./config')
+
+config.account = process.env.MAJSOUL_DHS_ACCOUNT
+config.password = process.env.MAJSOUL_DHS_PASSWORD
+if (!config.account || !config.password) {
+    console.log(`需要设置如下2个系统环境变量：
+MAJSOUL_DHS_ACCOUNT 雀魂账号
+MAJSOUL_DHS_PASSWORD 雀魂密码`)
+    process.exit(2)
+}
 
 // 加载db
 let db = {}
@@ -16,8 +26,7 @@ const saveDbSync = ()=>{
 process.on('exit', saveDbSync)
 
 // 启动
-const config = require('./config')
-dhs.start(config.account, config.password, {url: 'wss://gateway-v2.majsoul.com:6001'})
+dhs.start(config.account, config.password, {url: config.url})
 
 const isMaster = (id)=>{
     return config.master.includes(id)
