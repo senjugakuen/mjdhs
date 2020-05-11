@@ -27,6 +27,7 @@ process.on('exit', saveDbSync)
 
 // 启动
 dhs.start(config.account, config.password, {url: config.url})
+console.log(Date(), "已启动")
 
 const isMaster = (id)=>{
     return config.master.includes(id)
@@ -34,6 +35,7 @@ const isMaster = (id)=>{
 
 // 安全退出(forever或pm2自动重启)
 const reboot = async()=>{
+    console.log(Date(), "已停止")
     return new Promise((resolve, reject)=>{
         dhs.close(()=>resolve())
     })
