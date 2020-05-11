@@ -297,7 +297,6 @@ const main = async(data)=>{
                     if (!param)
                         return '请输入ID'
                     res = await callApi('addContestPlayer', cid, param)
-                    console.log(res)
                     return '添加' + u(res)
                     break
                 case '删除':
