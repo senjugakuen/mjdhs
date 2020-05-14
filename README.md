@@ -35,10 +35,10 @@ MAJSOUL_DHS_PASSWORD 雀魂密码
 # forever start index.js
 ```
 
-普通启动(在后台运行)
+普通启动
 
 ```shell
-# nohup node index.js&
+# node index.js
 ```
 
 启动后会在目录下生成一个db文件，用来保存QQ群和赛事ID的对应关系
