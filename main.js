@@ -26,7 +26,7 @@ const saveDbSync = ()=>{
 process.on('exit', saveDbSync)
 
 // 启动
-dhs.start(config.account, config.password, {url: config.url})
+dhs.start(config.account, config.password, {url: config.dhs_url})
 console.log(Date(), "已启动")
 
 const isMaster = (id)=>{

@@ -13,7 +13,10 @@ process.on('unhandledRejection', (reason, promise)=>{
 
 const main = require('./main')
 const http = require('http')
+const config = require('./config')
 http.createServer((req, res)=>{
+
+    //接收github推送事件，不需要可屏蔽相关代码
     let r = url.parse(req.url)
     if (r.pathname === "/youShouldPull") {
         proc.exec('./up', (error, stdout, stderr) => {
@@ -26,11 +29,13 @@ http.createServer((req, res)=>{
         })
         return
     }
-    if (req.method !== 'POST' || req.socket.remoteAddress !== '::ffff:172.17.0.2') {
+
+    if (req.method !== 'POST' || (config.allowed.length > 0 && !config.allowed.includes(req.socket.remoteAddress))) {
         res.writeHead(404)
         res.end()
         return
     }
+
     let data = []
     req.on('data', (d)=>data.push(d))
     req.on('end', async()=>{
@@ -55,4 +60,4 @@ http.createServer((req, res)=>{
         res.writeHead(404)
         res.end()
     })
-}).listen(3001)
+}).listen(config.port)
