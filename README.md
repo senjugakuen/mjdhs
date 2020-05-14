@@ -25,7 +25,7 @@ MAJSOUL_DHS_PASSWORD 雀魂密码
 
 ### **启动**
 
-* 推荐使用forever或pm2来启动进程，这样主人可以通过输入"dhs重启"来重启进程  
+* 推荐使用forever或pm2来启动进程，这样主人可以通过QQ输入"dhs重启"来重启进程  
 * 目录需要有可写权限
 
 安装forever并启动
@@ -42,3 +42,7 @@ MAJSOUL_DHS_PASSWORD 雀魂密码
 ```
 
 启动后会在目录下生成一个db文件，用来保存QQ群和赛事ID的对应关系
+
+### **使用**
+
+QQ输入"dhs"查看帮助
