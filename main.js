@@ -146,7 +146,7 @@ const main = async(data)=>{
     if (!cid && !['綁定', '绑定'].includes(cmd))
         return '尚未绑定比赛。需要帮助输入: dhs'
     else {
-        if (!isAdmin && ['綁定', '绑定', '解綁', '解绑', '添加', '删除', '重置', '开赛', '開賽', '终止', '終止'].includes(cmd))
+        if (!isAdmin && !isMaster(data.user_id) && ['綁定', '绑定', '解綁', '解绑', '添加', '删除', '重置', '开赛', '開賽', '终止', '終止'].includes(cmd))
             return '你没有权限'
         try {
             let res = ''
