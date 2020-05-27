@@ -63,7 +63,9 @@ dhs大厅 / dhs待机 / dhs排名
 dhs开赛 / dhs终止 / dhs暂停 / dhs恢复
 dhs添加 / dhs删除 / dhs重置 
 ● 系统类指令(群管理员才能用)
-dhs绑定 / dhs解绑`
+dhs绑定 / dhs解绑
+-----该项目的Github地址-----
+https://github.com/senjugakuen/dhs`
 
 const kaisai = `-----dhs开赛指令说明-----
 ● 一般用法
@@ -76,9 +78,7 @@ dhs开赛 A君 500,B君 500,500
 ● 设置标签法: 在最后添加"||tag"
 ※选手不足会自动增加电脑
 ※半角逗号分隔每个选手,空格分隔选手和点数
-※可以用换行代替逗号分隔每个选手
------该项目的Github地址-----
-https://github.com/senjugakuen/dhs`
+※可以用换行代替逗号分隔每个选手`
 
 const ranks = ["初心","雀士","雀杰","雀豪","雀圣","魂天"]
 const getRank = id=>{
