@@ -64,7 +64,7 @@ dhs大厅 / dhs待机 / dhs排名
 dhs开赛 / dhs终止 / dhs暂停 / dhs恢复
 dhs添加 / dhs删除 / dhs重置 
 ● 系统类指令(群管理员才能用)
-dhs绑定 / dhs解绑
+dhs绑定 / dhs解绑 / dhs播报
 -----该项目的Github地址-----
 https://github.com/senjugakuen/dhs`
 
@@ -412,7 +412,7 @@ dhs.on('NotifyContestGameStart', (data)=>{
         return
     game_notify_uuid_list.add(uuid)
     let gid = findGid(0 - data.contest_id)
-    let msg = '游戏开始: '
+    let msg = '对局开始: '
     let players = []
     for (let player of data.game_info.players) {
         players.push(player.nickname?player.nickname:'电脑')
@@ -426,7 +426,7 @@ dhs.on('NotifyContestGameEnd', (data)=>{
         return
     game_notify_uuid_list.delete(uuid)
     let gid = findGid(0 - data.contest_id)
-    sendGroupMessage(gid, '游戏结束: ' + uuid)
+    sendGroupMessage(gid, '对局结束: ' + uuid)
 })
 
 // 公告更新
