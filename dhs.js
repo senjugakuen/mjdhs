@@ -97,7 +97,7 @@ const apis = {
     // 查询正在进行的比赛和准备的玩家 返回{games:[], players:[]}
     startManageGame: async()=>{
         let result = await dhs.sendAsync('startManageGame')
-        await dhs.sendAsync('stopManageGame')
+        // await dhs.sendAsync('stopManageGame')
         return result
     },
 

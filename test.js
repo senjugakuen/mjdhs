@@ -49,6 +49,20 @@ let result
 // console.log(result)
 
 // result = await main({
+//     'message': 'dhs播报',
+//     'group_id': 123,
+//     'sender': {'role':'admin'}
+// })
+// console.log(result)
+
+// result = await main({
+//     'message': 'dhs待机',
+//     'group_id': 123,
+//     'sender': {'role':'admin'}
+// })
+// console.log(result)
+
+// result = await main({
 //     'message': 'dhs添加',
 //     'group_id': 123,
 //     'sender': {'role':'admin'}
@@ -63,7 +77,7 @@ let result
 // console.log(result)
 
 // result = await main({
-//     'message': 'dhs开赛 高山||sss',
+//     'message': 'dhs开赛!',
 //     'group_id': 123,
 //     'sender': {'role':'admin'}
 // })
