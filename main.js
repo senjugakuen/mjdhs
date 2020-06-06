@@ -455,7 +455,7 @@ dhs.on('NotifyContestGameEnd', async(data)=>{
         msg += `\n${moment.unix(result.head.start_time).utcOffset(8).format("H:mm:ss")} - ${moment.unix(result.head.end_time).utcOffset(8).format("H:mm:ss")}`
         for (let player of result.head.result.players) {
             let nickname = '电脑'
-            if (result.head.hasOwnProperty(accounts)) {
+            if (result.head.hasOwnProperty('accounts')) {
                 for (let account of result.head.accounts) {
                     if (account.seat === player.seat) {
                         nickname = account.nickname
