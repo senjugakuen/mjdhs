@@ -420,13 +420,52 @@ dhs.on('NotifyContestGameStart', (data)=>{
     msg += players.join() + ' / ' + uuid
     sendGroupMessage(gid, msg)
 })
-dhs.on('NotifyContestGameEnd', (data)=>{
+dhs.on('NotifyContestGameEnd', async(data)=>{
     let uuid = data.game_uuid
     if (!game_notify_uuid_list.has(uuid))
         return
     game_notify_uuid_list.delete(uuid)
     let gid = findGid(0 - data.contest_id)
-    sendGroupMessage(gid, '对局结束: ' + uuid)
+    if (!gid) return
+    let msg = '对局结束: ' + uuid
+    let result = await new Promise((resolve)=>{
+        http.get('http://usus.lietxia.bid/api?m=fetchGameRecord&game_uuid='+uuid, (res)=>{
+            let data = ''
+            res.on('data', chunk=>{
+                data += chunk
+            })
+            res.on('end', chunk=>{
+                try {
+                    resolve(JSON.parse(data))
+                } catch(e) {
+                    resolve({error:0})
+                }
+            })
+        }).on('error', ()=>{
+            resolve({error:0})
+        })
+    })
+    // console.log(result)
+    if (result.hasOwnProperty('error')) {
+        if (result.error === 0)
+            msg += '\n请求结果时遇到网络错误'
+        else
+            msg += '\n对局被终止'
+    } else {
+        msg += `\n${moment.unix(result.head.start_time).utcOffset(8).format("H:mm:ss")} - ${moment.unix(result.head.end_time).utcOffset(8).format("H:mm:ss")}`
+        for (let player of result.head.result.players) {
+            let nickname = '电脑'
+            if (result.head.hasOwnProperty(accounts)) {
+                for (let account of result.head.accounts) {
+                    if (account.seat === player.seat) {
+                        nickname = account.nickname
+                    }
+                }
+            }
+            msg += `\n${nickname} ${player.part_point_1}`
+        }
+    }
+    sendGroupMessage(gid, msg)
 })
 
 // 公告更新
