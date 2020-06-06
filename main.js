@@ -390,19 +390,20 @@ const main = async(data)=>{
 
 // 主动发送群消息
 const sendGroupMessage = (gid, msg)=>{
-    if (!gid || !msg.length) return
-    // console.log(msg)
+    console.log(msg)
     msg = encodeURIComponent(msg)
     let url = `http://172.17.0.2:5700/send_group_msg?group_id=${gid}&message=` + msg
     http.get(url, ()=>{}).on('error', ()=>{})
 }
 
 // 选手 准备&取消 通知
-// dhs.on('NotifyContestMatchingPlayer', (data)=>{
-//     let gid = findGid(0 - data.contest_id)
-//     let type = data.type == 1 ? ' 已准备' : ' 取消准备'
-//     sendGroupMessage(gid, data.nickname + type)
-// })
+dhs.on('NotifyContestMatchingPlayer', async(data)=>{
+    let gid = findGid(0 - data.contest_id)
+    if (!gid || data.type !== 1) return
+    let cnt = (await callApi('startManageGame', data.contest_id)).players.length
+    let msg = `大会室${cnt}人已预约` + (cnt<4?`(${cnt}=${4-cnt})`:'')
+    sendGroupMessage(gid, msg)
+})
 
 // 游戏 开始&结束 通知
 let game_notify_uuid_list = new Set()
@@ -412,6 +413,7 @@ dhs.on('NotifyContestGameStart', (data)=>{
         return
     game_notify_uuid_list.add(uuid)
     let gid = findGid(0 - data.contest_id)
+    if (!gid) return
     let msg = '对局开始: '
     let players = []
     for (let player of data.game_info.players) {
