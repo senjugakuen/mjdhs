@@ -390,7 +390,7 @@ const main = async(data)=>{
 
 // 主动发送群消息
 const sendGroupMessage = (gid, msg)=>{
-    console.log(msg)
+    // console.log(msg)
     msg = encodeURIComponent(msg)
     let url = `http://172.17.0.2:5700/send_group_msg?group_id=${gid}&message=` + msg
     http.get(url, ()=>{}).on('error', ()=>{})
