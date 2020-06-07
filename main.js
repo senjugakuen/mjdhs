@@ -185,9 +185,9 @@ const main = async(data)=>{
                     break
                 case '更新':
                 case '刷新':
-                    let contestList = await callApi('renew', cid)
+                    let contest_list = await callApi('renew', cid)
                     for (let k in db) {
-                        if (!contestList.hasOwnProperty(Math.abs(db[k])))
+                        if (!contest_list.hasOwnProperty(Math.abs(db[k])))
                             delete db[k]
                     }
                     saveDbSync()

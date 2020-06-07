@@ -5,10 +5,10 @@ let auth = {
     account: '',
     password: ''
 }
-let contestList = {}
-let taskQueue = []
-let queueRuning = false
-let currentContestId = 0
+let contest_list = {}
+let task_queue = []
+let queue_running_flag = false
+let current_cid = 0
 
 const searchAccount = async(param)=>{
     let eids = param.toString().split(',')
@@ -18,10 +18,10 @@ const searchAccount = async(param)=>{
 
 // 增加/删除参赛人员 setting_type:1设定,2增加,3删除 返回例{total:3,success:2,nicknames:['nick1','nick2']}
 const updateContestPlayer = async(setting_type, eids)=>{
-    let searchResult = await searchAccount(eids)
+    let search_result = await searchAccount(eids)
     let account_ids = []
     let nicknames = []
-    for (let v of searchResult) {
+    for (let v of search_result) {
         account_ids.push(v.account_id)
         nicknames.push(v.nickname)
     }
@@ -33,7 +33,7 @@ const updateContestPlayer = async(setting_type, eids)=>{
             nicknames: nicknames
         }
     )
-    return {total: eids.split(',').length, success: searchResult.length, nicknames: nicknames}
+    return {total: eids.split(',').length, success: search_result.length, nicknames: nicknames}
 }
 
 // 所有可用api
@@ -41,7 +41,7 @@ const apis = {
 
     // 查询比赛基本信息
     fetchContestInfo: async()=>{
-        return contestList[currentContestId]
+        return contest_list[current_cid]
     },
 
     // 查询规则
@@ -224,15 +224,15 @@ const apis = {
 // 获得有管理权限的比赛
 const fetchRelatedContestList = async()=>{
     let list = await dhs.sendAsync('fetchRelatedContestList')
-    contestList = {}
+    contest_list = {}
     for (let v of list.contests)
-        contestList[v.contest_id] = v
-    return contestList
+        contest_list[v.contest_id] = v
+    return contest_list
 }
 
 // 调用api
 const callApi = (name, contest_id = 0, callback = ()=>{}, params = [])=>{
-    taskQueue.push({
+    task_queue.push({
         name: name,
         contest_id: contest_id,
         callback: callback,
@@ -243,32 +243,32 @@ const callApi = (name, contest_id = 0, callback = ()=>{}, params = [])=>{
 
 // 检查任务队列
 const checkQueue = async()=>{
-    if (queueRuning)
+    if (queue_running_flag)
         return
-    queueRuning = true
-    while (taskQueue.length) {
-        let task = taskQueue.shift()
+    queue_running_flag = true
+    while (task_queue.length) {
+        let task = task_queue.shift()
         if (task.name === 'stop') {
-            taskQueue = []
+            task_queue = []
             task.callback()
             break
         }
         let result = {}
         try {
-            if (!contestList.hasOwnProperty(task.contest_id))
+            if (!contest_list.hasOwnProperty(task.contest_id))
                 await fetchRelatedContestList()
-            if (!contestList.hasOwnProperty(task.contest_id))
+            if (!contest_list.hasOwnProperty(task.contest_id))
                 result.error = {code: 9000, cid: task.contest_id}
             else {
-                if (currentContestId != task.contest_id) {
-                    if (currentContestId > 0)
+                if (current_cid != task.contest_id) {
+                    if (current_cid > 0)
                         await dhs.sendAsync('exitManageContest')
-                    let unique_id = contestList[task.contest_id].unique_id
+                    let unique_id = contest_list[task.contest_id].unique_id
                     await dhs.sendAsync(
                         'manageContest',
                         {unique_id: unique_id}
                     )
-                    currentContestId = task.contest_id
+                    current_cid = task.contest_id
                 }
                 result = await apis[task.name].apply(null, task.params)
             }
@@ -279,7 +279,7 @@ const checkQueue = async()=>{
         }
         task.callback(result)
     }
-    queueRuning = false
+    queue_running_flag = false
 }
 
 // 初始化
@@ -290,6 +290,14 @@ const init = async()=>{
             {account: auth.account, password: dhs.hash(auth.password)}
         )
         await fetchRelatedContestList()
+
+        //这个操作是为了开启所有比赛的监听
+        for (let cid in contest_list) {
+            await new Promise((resolve)=>{
+                setTimeout(resolve, 1000)
+            })
+            callApi('startManageGame', cid)
+        }
     } catch (e) {
         // console.log(e)
     }
@@ -302,7 +310,7 @@ const start = (account, password, option = {})=>{
     dhs = new MJSoul.DHS(option)
     dhs.on('error', (e)=>{})
     dhs.on('close', ()=>{
-        currentContestId = 0
+        current_cid = 0
     })
     dhs.open(init)  
 }
@@ -316,7 +324,7 @@ const close = (cb)=>{
 const on = (name, cb)=>{
     dhs.on(name, (data)=>{
         if (data.unique_id) {
-            data.contest_id = parseInt(Object.keys(contestList).find(k=>contestList[k].unique_id===data.unique_id))
+            data.contest_id = parseInt(Object.keys(contest_list).find(k=>contest_list[k].unique_id===data.unique_id))
         }
         cb(data)
     })
@@ -326,16 +334,3 @@ module.exports.start = start
 module.exports.close = close
 module.exports.callApi = callApi
 module.exports.on = on //start之后才能绑定事件
-
-// setTimeout(async()=>{
-
-// let result
-// try {
-//     result = await dhs.sendAsync('manageContest', {unique_id: 123456})
-//     result = await dhs.sendAsync('fetchContestGameRule', {unique_id: 123456})
-// } catch (e) {
-//     result = e
-// }
-// console.log(result)
-
-// },4000) 
