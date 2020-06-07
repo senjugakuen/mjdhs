@@ -449,10 +449,10 @@ dhs.on('NotifyContestGameEnd', async(data)=>{
     })
     // console.log(result)
     if (result.hasOwnProperty('error')) {
-        if (result.error === 0)
-            msg += '\n请求结果时遇到网络错误'
-        else
+        if (result.error.code === 1203)
             msg += '\n对局被终止'
+        else
+            msg += '\n请求结果时遇到网络错误'
     } else {
         msg += `\n${moment.unix(result.head.start_time).utcOffset(8).format("H:mm:ss")} - ${moment.unix(result.head.end_time).utcOffset(8).format("H:mm:ss")}`
         for (let player of result.head.result.players) {
