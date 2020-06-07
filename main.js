@@ -58,7 +58,7 @@ const help = `-----dhs指令说明-----
 第②步 使用"dhs绑定 赛事id"指令将qq群和比赛绑定
 第③步 就可以用下面的指令啦!
 ● 查询类指令
-dhs规则 / dhs名单 / dhs公告 / dhs刷新
+dhs规则 / dhs名单 / dhs公告
 dhs大厅 / dhs待机 / dhs排名
 ● 比赛类指令(群管理员才能用)
 dhs开赛 / dhs终止 / dhs暂停 / dhs恢复
