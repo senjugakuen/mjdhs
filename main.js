@@ -406,12 +406,12 @@ dhs.on('NotifyContestMatchingPlayer', async(data)=>{
 })
 
 // 游戏 开始&结束 通知
-let game_notify_uuid_list = new Set()
+// let game_notify_uuid_list = new Set()
 dhs.on('NotifyContestGameStart', (data)=>{
     let uuid = data.game_info.game_uuid
-    if (game_notify_uuid_list.has(uuid))
-        return
-    game_notify_uuid_list.add(uuid)
+    // if (game_notify_uuid_list.has(uuid))
+    //     return
+    // game_notify_uuid_list.add(uuid)
     let gid = findGid(0 - data.contest_id)
     if (!gid) return
     let msg = '对局开始: '
@@ -419,14 +419,14 @@ dhs.on('NotifyContestGameStart', (data)=>{
     for (let player of data.game_info.players) {
         players.push(player.nickname?player.nickname:'电脑')
     }
-    msg += players.join() + ' / ' + uuid
+    msg += players.join() //+ ' / ' + uuid
     sendGroupMessage(gid, msg)
 })
 dhs.on('NotifyContestGameEnd', async(data)=>{
     let uuid = data.game_uuid
-    if (!game_notify_uuid_list.has(uuid))
-        return
-    game_notify_uuid_list.delete(uuid)
+    // if (!game_notify_uuid_list.has(uuid))
+    //     return
+    // game_notify_uuid_list.delete(uuid)
     let gid = findGid(0 - data.contest_id)
     if (!gid) return
     let msg = '对局结束: ' + uuid
