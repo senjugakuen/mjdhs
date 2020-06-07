@@ -54,7 +54,7 @@ const callApi = async(method, cid, param)=>{
 }
 
 const help = `-----dhs指令说明-----
-第①步 在大会室后台将 ${config.eid}(查询) 设置为比赛管理
+第①步 在大会室后台将 ${config.eid} 设置为比赛管理
 第②步 使用"dhs绑定 赛事id"指令将qq群和比赛绑定
 第③步 就可以用下面的指令啦!
 ● 查询类指令
@@ -401,7 +401,7 @@ dhs.on('NotifyContestMatchingPlayer', async(data)=>{
     let gid = findGid(0 - data.contest_id)
     if (!gid || data.type !== 1) return
     let cnt = (await callApi('startManageGame', data.contest_id)).players.length
-    let msg = `大会室${cnt}人已预约` + (cnt<4?`(${cnt}=${4-cnt})`:'')
+    let msg = `${data.nickname} 在大会室准备 ` + (cnt<4?`(${cnt}=${4-cnt})`:`(${cnt}人已准备)`)
     sendGroupMessage(gid, msg)
 })
 

@@ -294,7 +294,7 @@ const init = async()=>{
         //这个操作是为了开启所有比赛的监听
         for (let cid in contest_list) {
             await new Promise((resolve)=>{
-                setTimeout(resolve, 1000)
+                setTimeout(resolve, 500)
             })
             callApi('startManageGame', cid)
         }
