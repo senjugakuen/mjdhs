@@ -53,7 +53,8 @@ const callApi = async(method, cid, param)=>{
     })
 }
 
-const help = `第①步 在大会室后台将 ${config.eid} 设置为比赛管理
+const help = `-----dhs指令说明-----
+第①步 在大会室后台将 ${config.eid} 设置为比赛管理
 第②步 使用"dhs绑定 赛事id"指令将qq群和比赛绑定
 第③步 就可以用下面的指令啦!
 ● 查询类指令
