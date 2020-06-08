@@ -1,15 +1,19 @@
 'use strict'
+const Events = require('events')
 const MJSoul = require('mjsoul')
 let dhs = null
 let auth = {
     account: '',
     password: ''
 }
-let contest_list = {}
+let contest_list = {} //管理的比赛列表,key是cid
 let task_queue = []
 let queue_running_flag = false
 let current_cid = 0
+let gaming_list = {} //进行中的游戏和准备中的选手列表,key是cid
+const events = new Events()
 
+// 通过eid查找用户
 const searchAccount = async(param)=>{
     let eids = param.toString().split(',')
     let res = await dhs.sendAsync('searchAccountByEid', {eids: eids})
@@ -95,10 +99,17 @@ const apis = {
     },
 
     // 查询正在进行的比赛和准备的玩家 返回{games:[], players:[]}
+    startManageGameAndCache: async()=>{
+        gaming_list[current_cid] = await dhs.sendAsync('startManageGame')
+        gaming_list[current_cid].requset_time = Date.now()
+        // await dhs.sendAsync('stopManageGame') //调用这个api会关闭通知接收
+        return gaming_list[current_cid]
+    },
     startManageGame: async()=>{
-        let result = await dhs.sendAsync('startManageGame')
-        // await dhs.sendAsync('stopManageGame')
-        return result
+        if (gaming_list.hasOwnProperty(current_cid) && Date.now() - gaming_list[current_cid].requset_time < 1000*60*5)
+            return gaming_list[current_cid]
+        else
+            return await apis.startManageGameAndCache()
     },
 
     // 暂停比赛
@@ -151,7 +162,6 @@ const apis = {
         let players = (await apis.startManageGame()).players //查找准备中的玩家
 
         if (auto_mode) {
-            random_position = true
             for (let player of players) {
                 nicknames.push(player.nickname)
                 if (nicknames.length >= 4)
@@ -278,17 +288,21 @@ const checkQueue = async()=>{
             if (!contest_list.hasOwnProperty(task.contest_id))
                 result.error = {code: 9000, cid: task.contest_id}
             else {
-                if (current_cid != task.contest_id) {
-                    if (current_cid > 0)
-                        await dhs.sendAsync('exitManageContest')
-                    let unique_id = contest_list[task.contest_id].unique_id
-                    await dhs.sendAsync(
-                        'manageContest',
-                        {unique_id: unique_id}
-                    )
-                    current_cid = task.contest_id
+                if (task.name === 'startManageGame' && gaming_list.hasOwnProperty(task.contest_id)) {
+                    result = gaming_list[task.contest_id]
+                } else {
+                    if (current_cid != task.contest_id) {
+                        if (current_cid > 0)
+                            await dhs.sendAsync('exitManageContest')
+                        let unique_id = contest_list[task.contest_id].unique_id
+                        await dhs.sendAsync(
+                            'manageContest',
+                            {unique_id: unique_id}
+                        )
+                        current_cid = task.contest_id
+                    }
+                    result = await apis[task.name].apply(null, task.params)
                 }
-                result = await apis[task.name].apply(null, task.params)
             }
         } catch (e) {
             if (e.error.code === 2501)
@@ -316,10 +330,14 @@ const init = async()=>{
             })
             callApi('startManageGame', cid)
         }
+        // console.log(require('util').inspect(gaming_list, {showHidden: false, depth: null}))
     } catch (e) {
         // console.log(e)
     }
 }
+
+// unique_id转contest_id
+const getCid = (unique_id)=>parseInt(Object.keys(contest_list).find(k=>contest_list[k].unique_id===unique_id))
 
 // 启动函数
 const start = (account, password, option = {})=>{
@@ -330,6 +348,54 @@ const start = (account, password, option = {})=>{
     dhs.on('close', ()=>{
         current_cid = 0
     })
+    dhs.on('NotifyContestMatchingPlayer', (data)=>{
+        let cid = getCid(data.unique_id)
+        if (!gaming_list.hasOwnProperty(cid)) return
+        for (let i = 0; i < gaming_list[cid].players.length; ++i) {
+            if (gaming_list[cid].players[i].account_id === data.account_id && data.type !== 1) {
+                gaming_list[cid].players.splice(i, 1)
+                data.contest_id = cid
+                events.emit('NotifyContestMatchingPlayer', data)
+                return
+            }
+            if (gaming_list[cid].players[i].account_id === data.account_id && data.type === 1) {
+                return
+            }
+        }
+        if (data.type === 1) {
+            gaming_list[cid].players.push({account_id:data.account_id, nickname: data.nickname})
+            data.contest_id = cid
+            events.emit('NotifyContestMatchingPlayer', data)
+        }
+    })
+    dhs.on('NotifyContestGameStart', (data)=>{
+        let cid = getCid(data.unique_id)
+        if (!gaming_list.hasOwnProperty(cid)) return
+        for (let i = 0; i < gaming_list[cid].games.length; ++i) {
+            if (gaming_list[cid].games[i].game_uuid === data.game_info.game_uuid) {
+                return
+            }
+        }
+        gaming_list[cid].games.push(data.game_info)
+        data.contest_id = cid
+        events.emit('NotifyContestGameStart', data)
+    })
+    dhs.on('NotifyContestGameEnd', (data)=>{
+        let cid = getCid(data.unique_id)
+        if (!gaming_list.hasOwnProperty(cid)) return
+        for (let i = 0; i < gaming_list[cid].games.length; ++i) {
+            if (gaming_list[cid].games[i].game_uuid === data.game_uuid) {
+                gaming_list[cid].games.splice(i, 1)
+                data.contest_id = cid
+                events.emit('NotifyContestGameEnd', data)
+                return
+            }
+        }
+    })
+    dhs.on('NotifyContestNoticeUpdate', (data)=>{
+        data.contest_id = getCid(data.unique_id)
+        events.emit('NotifyContestNoticeUpdate', data)
+    })
     dhs.open(init)  
 }
 
@@ -338,17 +404,7 @@ const close = (cb)=>{
     callApi('stop', 0, cb)
 }
 
-// 绑定通知事件
-const on = (name, cb)=>{
-    dhs.on(name, (data)=>{
-        if (data.unique_id) {
-            data.contest_id = parseInt(Object.keys(contest_list).find(k=>contest_list[k].unique_id===data.unique_id))
-        }
-        cb(data)
-    })
-}
-
 module.exports.start = start
 module.exports.close = close
 module.exports.callApi = callApi
-module.exports.on = on //start之后才能绑定事件
+module.exports.events = events //Events类的实例

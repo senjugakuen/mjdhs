@@ -53,26 +53,23 @@ const callApi = async(method, cid, param)=>{
     })
 }
 
-const help = `-----dhs指令说明-----
+const help = `-----大会室指令说明-----
 第①步 在大会室后台将 ${config.eid} 设置为比赛管理
-第②步 使用"dhs绑定 赛事id"指令将qq群和比赛绑定
-第③步 就可以用下面的指令啦!
+第②步 输入".绑定 赛事id"将qq群和比赛绑定, 就可使用以下指令
 ● 查询类指令
-dhs规则 / dhs名单 / dhs公告
-dhs大厅 / dhs待机 / dhs排名
-● 比赛类指令(开赛以外须群管理权限)
-dhs开赛 / dhs终止 / dhs暂停 / dhs恢复
-dhs添加 / dhs删除 / dhs重置 
-● 系统类指令(解绑须群管理权限)
-dhs绑定 / dhs解绑 / dhs播报 ※订阅通知`
+.规则 / .名单 / .公告
+.大厅 / .待机 / .排名
+● 比赛类指令(开赛以外须小绿人权限)
+.开赛 / .终止 / .暂停 / .恢复
+.添加 / .删除 / .重置 
+● 系统类指令(解绑须小绿人权限)
+.绑定 / .解绑 / .帮助 / .播报`
 
-const kaisai = `-----dhs开赛指令说明-----
-● 按准备顺序开赛(随机座位)
-dhs开赛!
+const kaisai = `-----开赛指令说明-----
 ● 设置选手(选手不足自动添加电脑)
-dhs开赛 A君,B君,C君
+.开赛 A君,B君,C君
 ● 设置点数(没名字的代表电脑)
-dhs开赛 A君 500,B君 500,500,500
+.开赛 A君 500,B君 500,500,500
 ● 固定座位法: 在第一个选手前添加"!"
 ● 设置标签法: 在最后添加"||tag"
 ※半角逗号分隔每个选手, 空格分隔选手和点数
@@ -119,20 +116,22 @@ const findGid = (cid)=>{
 
 const main = async(data)=>{
     data.message = data.message.trim()
-    let debug = false
-    if (data.message[0] === '-') {
-        debug = true
-        data.message = data.message.substr(1)
-    }
-    if (data.message.substr(0, 3).toLowerCase() !== 'dhs')
+    let prefix
+    if (data.message.substr(0, 3).toLowerCase() === 'dhs') {
+        prefix = 'dhs'
+        data.message = data.message.substr(3).trim()
+    } else if (data.message.substr(0, 1) === '.') {
+        prefix = data.message.substr(0, 1)
+        data.message = data.message.substr(1).trim()
+    } else {
         return
-    data.message = data.message.substr(3).trim()
+    }
     let cmd = data.message.substr(0, 2)
     if (isMaster(data.user_id) && cmd === '重启') {
         await reboot()
         return 'reboot'
     }
-    if (cmd === '' || cmd === '帮助')
+    if ((prefix === 'dhs' && cmd === '') || cmd === '帮助')
         return help
 
     let param = data.message.substr(2).trim().replace(/(\r\n|\n|\r)/g,',')
@@ -142,10 +141,10 @@ const main = async(data)=>{
     let cid = 0
     if (db[gid]) cid = db[gid]
     if (!cid && !['綁定', '绑定'].includes(cmd))
-        return '尚未绑定比赛。需要帮助输入: dhs'
+        return '尚未绑定比赛。需要帮助输入: .帮助'
     else {
         if (!is_admin && !isMaster(data.user_id) && ['解綁', '解绑', '添加', '删除', '重置', '终止', '終止','暂停','暫停','恢复','恢復'].includes(cmd))
-            return '你没有权限'
+            return '这个指令需要小绿人权限'
         try {
             let res = ''
             switch (cmd) {
@@ -168,7 +167,7 @@ const main = async(data)=>{
                         return '请输入正确的赛事id。'
                     if (findGid(cid) || findGid(0-cid))
                         return cid + '已经绑定了其他群。'
-                    await callApi('fetchContestInfo', cid)
+                    await callApi('startManageGame', cid)
                     db[gid] = cid
                     saveDbSync()
                     return cid + "绑定成功。"
@@ -325,15 +324,15 @@ const main = async(data)=>{
                     break
                 case '開賽':
                 case '开赛':
-                    if (!param)
+                    if (param === '?' || param === '？')
                         return kaisai
                     res = await callApi('createContestGame', cid, param)
                     let tag = param.split('||')[1]
                     tag = tag ? tag : ''
-                    if (res.result)
+                    if (res.result) 
                         return `${tag}开赛成功。`
                     else
-                        return `${tag}开赛失败。 ${res.message}。`
+                        return `${tag}开赛失败。 ${res.message}。${param?'':'\n※查看开赛详细用法输入: .开赛?'}`
                     break
                 case '終止':
                 case '终止':
@@ -357,7 +356,7 @@ const main = async(data)=>{
                     return '游戏已恢复。 编号: ' + param
                     break
                 default:
-                    return '指令不正确。需要帮助输入: dhs'
+                    return '指令不正确。需要帮助输入: .帮助'
                     break
             }
         } catch (e) {
@@ -378,9 +377,9 @@ const main = async(data)=>{
                 return '自动匹配模式下不能手动开赛。'
             if (error.code === 1203)
                 return '游戏编号错误。'
+            if (error.code === 1210)
+                return '游戏编号错误(已经执行了该操作)。'
             fs.appendFileSync('err.log', Date() + ' Error.code: ' + error.code + '\n')
-            if (debug)
-                return e
             return `执行失败(错误码:${error.code})。`
         }
     }
@@ -395,7 +394,7 @@ const sendGroupMessage = (gid, msg)=>{
 }
 
 // 选手 准备&取消 通知
-dhs.on('NotifyContestMatchingPlayer', async(data)=>{
+dhs.events.on('NotifyContestMatchingPlayer', async(data)=>{
     let gid = findGid(0 - data.contest_id)
     if (!gid || data.type !== 1) return
     let cnt = (await callApi('startManageGame', data.contest_id)).players.length
@@ -404,12 +403,8 @@ dhs.on('NotifyContestMatchingPlayer', async(data)=>{
 })
 
 // 游戏 开始&结束 通知
-// let game_notify_uuid_list = new Set()
-dhs.on('NotifyContestGameStart', (data)=>{
+dhs.events.on('NotifyContestGameStart', (data)=>{
     let uuid = data.game_info.game_uuid
-    // if (game_notify_uuid_list.has(uuid))
-    //     return
-    // game_notify_uuid_list.add(uuid)
     let gid = findGid(0 - data.contest_id)
     if (!gid) return
     let msg = '对局开始: '
@@ -417,14 +412,11 @@ dhs.on('NotifyContestGameStart', (data)=>{
     for (let player of data.game_info.players) {
         players.push(player.nickname?player.nickname:'电脑')
     }
-    msg += players.join()// + ' / ' + uuid
+    msg += players.join() + ' / ' + uuid
     sendGroupMessage(gid, msg)
 })
-dhs.on('NotifyContestGameEnd', async(data)=>{
+dhs.events.on('NotifyContestGameEnd', async(data)=>{
     let uuid = data.game_uuid
-    // if (!game_notify_uuid_list.has(uuid))
-    //     return
-    // game_notify_uuid_list.delete(uuid)
     let gid = findGid(0 - data.contest_id)
     if (!gid) return
     let msg = '对局结束: ' + uuid
@@ -445,7 +437,6 @@ dhs.on('NotifyContestGameEnd', async(data)=>{
             resolve({error:0})
         })
     })
-    // console.log(result)
     if (result.hasOwnProperty('error')) {
         if (result.error.code === 1203)
             msg += '\n对局被终止'
@@ -469,7 +460,7 @@ dhs.on('NotifyContestGameEnd', async(data)=>{
 })
 
 // 公告更新
-dhs.on('NotifyContestNoticeUpdate', (data)=>{
+dhs.events.on('NotifyContestNoticeUpdate', (data)=>{
     let gid = findGid(0 - data.contest_id)
     let type = ['外部公告', '详细公告', '管理员公告'][data.notice_type - 1]
     sendGroupMessage(gid, '管理员更新了大会室' + type)
