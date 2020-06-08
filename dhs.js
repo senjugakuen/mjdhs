@@ -154,6 +154,8 @@ const apis = {
             random_position = true
             for (let player of players) {
                 nicknames.push(player.nickname)
+                if (nicknames.length >= 4)
+                    break
             }
         }
 
