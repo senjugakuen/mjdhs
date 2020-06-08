@@ -128,22 +128,34 @@ const apis = {
     createContestGame: async(nicknames)=>{
 
         // 是否随机座位
-        let random_position = true
-        if (nicknames[0] === '!') {
+        let random_position = true 
+        if (nicknames[0] === '!' || nicknames[0] === '！') {
             random_position = false
-            nicknames = nicknames.substr(1)
+            nicknames = nicknames.substr(1).trim()
         }
 
         // 获得tag
         let abc = nicknames.split('||')
-        nicknames = abc[0]
+        nicknames = abc[0].trim()
         let tag = abc[1] ? abc[1] : 'auto'
 
+        // 是否前3|4人自动开赛
+        let auto_mode = false
+        if (nicknames.length === 0) {
+            auto_mode = true
+        }
 
         let slots = [] //选手
         let absent = [] //缺席者
         nicknames = nicknames.split(',')
         let players = (await apis.startManageGame()).players //查找准备中的玩家
+
+        if (auto_mode) {
+            random_position = true
+            for (let player of players) {
+                nicknames.push(player.nickname)
+            }
+        }
 
         let seat = 0
         for (let v of nicknames) {
@@ -183,14 +195,17 @@ const apis = {
 
         // 有缺席者返回错误
         if (absent.length)
-            return {result: false, absent: absent}
+            return {result: false, message: `${absent} 缺席`}
 
         // 人数不足时添加电脑
         if (slots.length < 4) {
             let rule = await apis.fetchContestGameRule()
-            let playerCount = [1,2].includes(rule.round_type) ? 4 : 3
-            let minus = playerCount - slots.length
+            let player_count = [1,2].includes(rule.round_type) ? 4 : 3
+            let minus = player_count - slots.length
             while (minus > 0) {
+                if (auto_mode) {
+                    return {result: false, message: `准备者不足${player_count}人(${slots.length}人已准备)`}
+                }
                 minus--
                 let tmp = {
                     account_id: 0,
@@ -201,6 +216,7 @@ const apis = {
             }
         }
 
+        // 开赛
         await dhs.sendAsync(
             'createContestGame',
             {

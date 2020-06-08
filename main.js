@@ -53,20 +53,17 @@ const callApi = async(method, cid, param)=>{
     })
 }
 
-const help = `-----dhs指令说明-----
-第①步 在大会室后台将 ${config.eid} 设置为比赛管理
+const help = `第①步 在大会室后台将 ${config.eid} 设置为比赛管理
 第②步 使用"dhs绑定 赛事id"指令将qq群和比赛绑定
 第③步 就可以用下面的指令啦!
 ● 查询类指令
 dhs规则 / dhs名单 / dhs公告
 dhs大厅 / dhs待机 / dhs排名
-● 比赛类指令(群管理员才能用)
+● 比赛类指令(开赛以外须群管理权限)
 dhs开赛 / dhs终止 / dhs暂停 / dhs恢复
 dhs添加 / dhs删除 / dhs重置 
-● 系统类指令(群管理员才能用)
-dhs绑定 / dhs解绑 / dhs播报
------该项目的Github地址-----
-https://github.com/senjugakuen/dhs`
+● 系统类指令(解绑须群管理权限)
+dhs绑定 / dhs解绑 / dhs播报 ※订阅通知`
 
 const kaisai = `-----dhs开赛指令说明-----
 ● 一般用法
@@ -75,10 +72,11 @@ dhs开赛 A君,B君,C君
 dhs开赛 A君 500,B君 500,C君 500
 ● 添加电脑
 dhs开赛 A君 500,B君 500,500
-● 固定東南西北法: 在第一个选手前添加"!"
 ● 设置标签法: 在最后添加"||tag"
+● 固定東南西北法: 在第一个选手前添加"!"
+● 当准备人数足够时, 可使用"dhs开赛!"
 ※选手不足会自动增加电脑
-※半角逗号分隔每个选手,空格分隔选手和点数
+※半角逗号分隔每个选手, 空格分隔选手和点数
 ※可以用换行代替逗号分隔每个选手`
 
 const ranks = ["初心","雀士","雀杰","雀豪","雀圣","魂天"]
@@ -129,7 +127,8 @@ const main = async(data)=>{
     }
     if (data.message.substr(0, 3).toLowerCase() !== 'dhs')
         return
-    let cmd = data.message.substr(3, 2)
+    data.message = data.message.substr(3).trim()
+    let cmd = data.message.substr(0, 2)
     if (isMaster(data.user_id) && cmd === '重启') {
         await reboot()
         return 'reboot'
@@ -137,7 +136,7 @@ const main = async(data)=>{
     if (cmd === '' || cmd === '帮助')
         return help
 
-    let param = data.message.substr(5).trim().replace(/(\r\n|\n|\r)/g,',')
+    let param = data.message.substr(2).trim().replace(/(\r\n|\n|\r)/g,',')
     let gid = data.group_id
     if (!gid) return 'dhs各指令只能在群里使用'
     let is_admin = ['owner', 'admin'].includes(data.sender.role)
@@ -146,7 +145,7 @@ const main = async(data)=>{
     if (!cid && !['綁定', '绑定'].includes(cmd))
         return '尚未绑定比赛。需要帮助输入: dhs'
     else {
-        if (!is_admin && !isMaster(data.user_id) && ['綁定', '绑定', '解綁', '解绑', '添加', '删除', '重置', '开赛', '開賽', '终止', '終止','暂停','暫停','恢复','恢復','播报','播報'].includes(cmd))
+        if (!is_admin && !isMaster(data.user_id) && ['解綁', '解绑', '添加', '删除', '重置', '终止', '終止','暂停','暫停','恢复','恢復'].includes(cmd))
             return '你没有权限'
         try {
             let res = ''
@@ -307,19 +306,19 @@ const main = async(data)=>{
                     break
                 case '添加':
                     if (!param)
-                        return '请输入选手ID,半角逗号分隔'
+                        return '请加上选手ID, 半角逗号或换行分隔'
                     res = await callApi('addContestPlayer', cid, param)
                     return '添加' + u(res)
                     break
                 case '删除':
                     if (!param)
-                        return '请输入选手ID,半角逗号分隔'
+                        return '请加上选手ID, 半角逗号或换行分隔'
                     res = await callApi('removeContestPlayer', cid, param)
                     return '删除' + u(res)
                     break
                 case '重置':
                     if (!param)
-                        return '请输入选手ID ※要删除全部选手输入:"dhs重置 确认"'
+                        return '请加上选手ID ※要删除全部选手输入:"dhs重置 确认"'
                     if (param === '确认')
                         param = ''
                     res = await callApi('updateContestPlayer', cid, param)
@@ -335,26 +334,26 @@ const main = async(data)=>{
                     if (res.result)
                         return `${tag}开赛成功。`
                     else
-                        return `${tag}开赛失败。 ${res.absent} 缺席。`
+                        return `${tag}开赛失败。 ${res.message}。`
                     break
                 case '終止':
                 case '终止':
                     if (!param)
-                        return '请输入游戏编号'
+                        return '请加上游戏编号'
                     res = await callApi('terminateGame', cid, param)
                     return '游戏已终止。 编号: ' + param
                     break
                 case '暫停':
                 case '暂停':
                     if (!param)
-                        return '请输入游戏编号'
+                        return '请加上游戏编号'
                     res = await callApi('pauseGame', cid, param)
                     return '游戏已暂停。 编号: ' + param
                     break
                 case '恢復':
                 case '恢复':
                     if (!param)
-                        return '请输入游戏编号'
+                        return '请加上游戏编号'
                     res = await callApi('resumeGame', cid, param)
                     return '游戏已恢复。 编号: ' + param
                     break
