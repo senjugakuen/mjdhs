@@ -57,19 +57,19 @@ const help = `-----大会室指令说明-----
 第①步 在大会室后台将 ${config.eid} 设置为比赛管理
 第②步 输入".绑定 赛事id"将qq群和比赛绑定, 就可使用以下指令
 ● 查询类指令
-.规则 / .名单 / .公告
-.大厅 / .待机 / .排名
+dhs规则 / dhs名单 / dhs公告
+dhs大厅 / dhs待机 / dhs排名
 ● 比赛类指令(开赛以外须小绿人权限)
-.开赛 / .终止 / .暂停 / .恢复
-.添加 / .删除 / .重置 
+dhs开赛 / dhs终止 / dhs暂停 / dhs恢复
+dhs添加 / dhs删除 / dhs重置 
 ● 系统类指令(解绑须小绿人权限)
-.绑定 / .解绑 / .帮助 / .播报`
+dhs绑定 / dhs解绑 / dhs帮助 / dhs播报`
 
 const kaisai = `-----开赛指令说明-----
 ● 设置选手(选手不足自动添加电脑)
-.开赛 A君,B君,C君
+dhs开赛 A君,B君,C君
 ● 设置点数(没名字的代表电脑)
-.开赛 A君 500,B君 500,500,500
+dhs开赛 A君 500,B君 500,500,500
 ● 固定座位法: 在第一个选手前添加"!"
 ● 设置标签法: 在最后添加"||tag"
 ※半角逗号分隔每个选手, 空格分隔选手和点数
@@ -111,7 +111,7 @@ const u = (res)=>{
 }
 
 const findGid = (cid)=>{
-  return parseInt(Object.keys(db).find(k=>db[k]===cid))
+    return parseInt(Object.keys(db).find(k=>db[k]===cid))
 }
 
 const main = async(data)=>{
@@ -121,6 +121,7 @@ const main = async(data)=>{
         prefix = 'dhs'
         data.message = data.message.substr(3).trim()
     } else if (data.message.substr(0, 1) === '.') {
+        return
         prefix = data.message.substr(0, 1)
         data.message = data.message.substr(1).trim()
     } else {
@@ -141,7 +142,7 @@ const main = async(data)=>{
     let cid = 0
     if (db[gid]) cid = db[gid]
     if (!cid && !['綁定', '绑定'].includes(cmd))
-        return '尚未绑定比赛。需要帮助输入: .帮助'
+        return '尚未绑定比赛。需要帮助输入: dhs'
     else {
         if (!is_admin && !isMaster(data.user_id) && ['解綁', '解绑', '添加', '删除', '重置', '终止', '終止','暂停','暫停','恢复','恢復'].includes(cmd))
             return '这个指令需要小绿人权限'
@@ -332,7 +333,7 @@ const main = async(data)=>{
                     if (res.result) 
                         return `${tag}开赛成功。`
                     else
-                        return `${tag}开赛失败。 ${res.message}。${param?'':'\n※查看开赛详细用法输入: .开赛?'}`
+                        return `${tag}开赛失败。 ${res.message}。${param?'':'\n※查看开赛详细用法输入: dhs开赛?'}`
                     break
                 case '終止':
                 case '终止':
@@ -356,7 +357,7 @@ const main = async(data)=>{
                     return '游戏已恢复。 编号: ' + param
                     break
                 default:
-                    return '指令不正确。需要帮助输入: .帮助'
+                    return '指令不正确。需要帮助输入: dhs'
                     break
             }
         } catch (e) {
