@@ -328,7 +328,7 @@ const init = async()=>{
             await new Promise((resolve)=>{
                 setTimeout(resolve, 500)
             })
-            callApi('startManageGame', cid)
+            callApi('startManageGameAndCache', cid)
         }
         // console.log(require('util').inspect(gaming_list, {showHidden: false, depth: null}))
     } catch (e) {
