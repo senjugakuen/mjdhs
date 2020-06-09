@@ -137,8 +137,8 @@ const main = async(data)=>{
     let param = data.message.substr(2).trim().replace(/(\r\n|\n|\r)/g,',')
     let gid = data.group_id
     if (!gid) return 'dhs各指令只能在群里使用'
-    if (gid !== 933269791) //debug
-        return
+    // if (gid !== 933269791) //debug
+    //     return
     let is_admin = ['owner', 'admin'].includes(data.sender.role)
     let cid = 0
     if (db[gid]) cid = db[gid]
