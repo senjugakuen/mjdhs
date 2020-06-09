@@ -334,7 +334,7 @@ const main = async(data)=>{
                     if (res.result) 
                         return `${tag}开赛成功。`
                     else
-                        return `${tag}开赛失败。 ${res.message}。${param?'':'\n※查看开赛详细用法输入: dhs开赛?'}`
+                        return `${tag}开赛失败。 ${res.message}。${param?'':'\n※查看开赛详细用法输入: %开赛?'}`
                     break
                 case '終止':
                 case '终止':
