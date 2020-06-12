@@ -423,7 +423,7 @@ dhs.events.on('NotifyContestGameEnd', async(data)=>{
     if (!gid) return
     let msg = '对局结束: ' + uuid
     let result = await new Promise((resolve)=>{
-        http.get('http://us.lietxia.bid:3000/api?m=fetchGameRecord&game_uuid='+uuid, (res)=>{
+        http.get('http://usus.lietxia.bid/api?m=fetchGameRecord&game_uuid='+uuid, (res)=>{
             let data = ''
             res.on('data', chunk=>{
                 data += chunk
