@@ -252,7 +252,7 @@ const apis = {
 // 获得有管理权限的比赛
 const fetchRelatedContestList = async()=>{
     let list = await dhs.sendAsync('fetchRelatedContestList')
-    console.log(list)
+    // console.log(list)
     contest_list = {}
     for (let v of list.contests)
         contest_list[v.contest_id] = v
