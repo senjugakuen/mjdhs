@@ -414,7 +414,7 @@ dhs.events.on('NotifyContestGameStart', (data)=>{
     for (let player of data.game_info.players) {
         players.push(player.nickname?player.nickname:'电脑')
     }
-    msg += players.join() + ' / ' + uuid
+    msg += players.join()// + ' / ' + uuid
     sendGroupMessage(gid, msg)
 })
 dhs.events.on('NotifyContestGameEnd', async(data)=>{
