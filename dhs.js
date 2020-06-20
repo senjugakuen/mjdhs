@@ -237,7 +237,7 @@ const apis = {
                 random_position: random_position,
                 open_live: true,
                 chat_broadcast_for_end: true,
-                ai_level: 2
+                ai_level: 1
             }
         )
         return {result: true}
