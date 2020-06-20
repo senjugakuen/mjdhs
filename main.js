@@ -137,8 +137,6 @@ const main = async(data)=>{
     let param = data.message.substr(2).trim().replace(/(\r\n|\n|\r)/g,',')
     let gid = data.group_id
     if (!gid) return 'dhs各指令只能在群里使用'
-    // if (gid !== 933269791) //debug
-    //     return
     let is_admin = ['owner', 'admin'].includes(data.sender.role)
     let cid = 0
     if (db[gid]) cid = db[gid]
@@ -408,19 +406,25 @@ dhs.events.on('NotifyContestMatchingPlayer', async(data)=>{
 dhs.events.on('NotifyContestGameStart', (data)=>{
     let uuid = data.game_info.game_uuid
     let gid = findGid(0 - data.contest_id)
-    if (!gid) return
+    if (!gid)
+        gid = findGid(data.contest_id)
+    if (!gid)
+        return
     let msg = '对局开始: '
     let players = []
     for (let player of data.game_info.players) {
         players.push(player.nickname?player.nickname:'电脑')
     }
-    msg += players.join()// + ' / ' + uuid
+    msg += players.join() + ' / ' + uuid
     sendGroupMessage(gid, msg)
 })
 dhs.events.on('NotifyContestGameEnd', async(data)=>{
     let uuid = data.game_uuid
     let gid = findGid(0 - data.contest_id)
-    if (!gid) return
+    if (!gid)
+        gid = findGid(data.contest_id)
+    if (!gid)
+        return
     let msg = '对局结束: ' + uuid
     let result = await new Promise((resolve)=>{
         http.get('http://usus.lietxia.bid/api?m=fetchGameRecord&game_uuid='+uuid, (res)=>{
@@ -461,11 +465,11 @@ dhs.events.on('NotifyContestGameEnd', async(data)=>{
     sendGroupMessage(gid, msg)
 })
 
-// 公告更新
-dhs.events.on('NotifyContestNoticeUpdate', (data)=>{
-    let gid = findGid(0 - data.contest_id)
-    let type = ['外部公告', '详细公告', '管理员公告'][data.notice_type - 1]
-    sendGroupMessage(gid, '管理员更新了大会室' + type)
-})
+// 公告更新 好像无效?
+// dhs.events.on('NotifyContestNoticeUpdate', (data)=>{
+//     let gid = findGid(0 - data.contest_id)
+//     let type = ['外部公告', '详细公告', '管理员公告'][data.notice_type - 1]
+//     sendGroupMessage(gid, '管理员更新了大会室' + type)
+// })
 
 module.exports = main
