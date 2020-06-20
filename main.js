@@ -127,6 +127,19 @@ const main = async(data)=>{
         return
     }
     let cmd = data.message.substr(0, 2)
+    cmd = cmd.replace("啟","启")
+        .replace("幫","帮")
+        .replace("綁","绑")
+        .replace("報","报")
+        .replace("規則","规则")
+        .replace("選","选")
+        .replace("單","单")
+        .replace("廳","厅")
+        .replace("機","机")
+        .replace("開賽","开赛")
+        .replace("終","终")
+        .replace("暫","暂")
+        .replace("復","复")
     if (isMaster(data.user_id) && cmd === '重启') {
         await reboot()
         return 'reboot'
@@ -140,16 +153,15 @@ const main = async(data)=>{
     let is_admin = ['owner', 'admin'].includes(data.sender.role)
     let cid = 0
     if (db[gid]) cid = db[gid]
-    if (!cid && !['綁定', '绑定'].includes(cmd))
+    if (!cid && cmd !== "绑定")
         return '尚未绑定比赛。需要帮助输入: %帮助'
     else {
-        if (!is_admin && !isMaster(data.user_id) && ['解綁', '解绑', '添加', '删除', '重置', '终止', '終止','暂停','暫停','恢复','恢復'].includes(cmd))
+        if (!is_admin && !isMaster(data.user_id) && ['解绑', '添加', '删除', '重置', '停止', '终止', '暂停', '恢复'].includes(cmd))
             return '这个指令需要小绿人权限'
         try {
             let res = ''
             switch (cmd) {
                 case '播报':
-                case '播報':
                     cid = 0 - cid
                     db[gid] = cid
                     saveDbSync()
@@ -158,7 +170,6 @@ const main = async(data)=>{
                     else
                         return "播报已开启"
                     break
-                case '綁定':
                 case '绑定':
                     if (cid)
                         return '已经绑定过比赛了，需要先解绑才能再次绑定。'
@@ -172,7 +183,6 @@ const main = async(data)=>{
                     saveDbSync()
                     return cid + "绑定成功。"
                     break
-                case '解綁':
                 case '解绑':
                     if (!cid)
                         return '尚未绑定比赛。'
@@ -190,7 +200,6 @@ const main = async(data)=>{
                     saveDbSync()
                     return '好了'
                     break
-                case '規則':
                 case '规则':
                     let info = await callApi('fetchContestInfo', cid)
                     let rule = await callApi('fetchContestGameRule', cid)
@@ -236,8 +245,6 @@ const main = async(data)=>{
                     res += notice[1]
                     return res
                     break
-                case '選手':
-                case '名單':
                 case '选手':
                 case '名单':
                     let playerList = await callApi('fetchContestPlayer', cid)
@@ -252,7 +259,6 @@ const main = async(data)=>{
                     }
                     return res
                     break
-                case '大廳':
                 case '大厅':
                     let lobby = await callApi('startManageGame', cid)
                     res = '\n[对局中]\n'
@@ -276,7 +282,6 @@ const main = async(data)=>{
                     }
                     return res
                     break
-                case '待機':
                 case '待机':
                     let waitings = (await callApi('startManageGame', cid)).players
                     res += '[准备中]\n'
@@ -322,7 +327,6 @@ const main = async(data)=>{
                     res = await callApi('updateContestPlayer', cid, param)
                     return '重置' + (param !== '' ? u(res) : '成功')
                     break
-                case '開賽':
                 case '开赛':
                     if (param === '?' || param === '？')
                         return kaisai
@@ -334,21 +338,19 @@ const main = async(data)=>{
                     else
                         return `${tag}开赛失败。 ${res.message}。${param?'':'\n※查看开赛详细用法输入: %开赛?'}`
                     break
-                case '終止':
+                case '停止':
                 case '终止':
                     if (!param)
                         return '请加上游戏编号'
                     res = await callApi('terminateGame', cid, param)
                     return '游戏已终止。 编号: ' + param
                     break
-                case '暫停':
                 case '暂停':
                     if (!param)
                         return '请加上游戏编号'
                     res = await callApi('pauseGame', cid, param)
                     return '游戏已暂停。 编号: ' + param
                     break
-                case '恢復':
                 case '恢复':
                     if (!param)
                         return '请加上游戏编号'
