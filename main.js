@@ -427,7 +427,7 @@ dhs.events.on('NotifyContestGameEnd', async(data)=>{
     //     gid = findGid(data.contest_id)
     if (!gid)
         return
-    let msg = '对局结束: ' + uuid
+    let msg = '对局结束: /?paipu=' + uuid
     let result = await new Promise((resolve)=>{
         http.get('http://usus.lietxia.bid/api?m=fetchGameRecord&game_uuid='+uuid, (res)=>{
             let data = ''
