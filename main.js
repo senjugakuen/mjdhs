@@ -248,7 +248,7 @@ const main = async(data)=>{
                 case '选手':
                 case '名单':
                     let playerList = await callApi('fetchContestPlayer', cid)
-                    res = '[参赛花名册]\n'
+                    res = `[参赛花名册(${playerList.length}个)]\n`
                     if (!playerList.length)
                         res += '(空)\n'
                     {
@@ -261,7 +261,7 @@ const main = async(data)=>{
                     break
                 case '大厅':
                     let lobby = await callApi('startManageGame', cid)
-                    res = '\n[对局中]\n'
+                    res = `\n[对局中(${lobby.games.length}个)]\n`
                     if (!lobby.games.length)
                         res += '(无)\n'
                     for (let v of lobby.games) {
@@ -271,7 +271,7 @@ const main = async(data)=>{
                         }
                         res += players.join(',') + ' / ' + moment.unix(v.start_time).utcOffset(8).format("H:mm:ss") + '开始 / ' + v.game_uuid + '\n'
                     }
-                    res += '\n[准备中]\n'
+                    res += `\n[准备中(${lobby.players.length}个)]\n`
                     if (!lobby.players.length)
                         res += '(无)\n'
                     {
@@ -284,7 +284,7 @@ const main = async(data)=>{
                     break
                 case '待机':
                     let waitings = (await callApi('startManageGame', cid)).players
-                    res += '[准备中]\n'
+                    res += `[准备中(${waitings.length}个)]\n`
                     if (!waitings.length)
                         res += '(无)\n'
                     {
@@ -297,13 +297,15 @@ const main = async(data)=>{
                     break
                 case '排名':
                     let rankList = await callApi('fetchCurrentRankList', cid)
-                    res = '[当前排名]\n'
+                    res = `[当前排名(${rankList.length}个)]\n`
                     if (!rankList.length)
                         res += '(空)'
                     else
                         res += '姓名 / 总分 / 对局数'
+                    let rank_index = 0
                     for (let v of rankList) {
-                        res += `\n${v.nickname} / ${v.total_point} / ${v.total_count}`
+                        rank_index++
+                        res += `\n${rank_index}. ${v.nickname} / ${v.total_point} / ${v.total_count}`
                     }
                     return res
                     break
@@ -334,7 +336,7 @@ const main = async(data)=>{
                     let tag = param.split('||')[1]
                     tag = tag ? tag : ''
                     if (res.result) 
-                        return `${tag}开赛成功。`
+                        return //`${tag}开赛成功。`
                     else
                         return `${tag}开赛失败。 ${res.message}。${param?'':'\n※查看开赛详细用法输入: %开赛?'}`
                     break
@@ -423,8 +425,8 @@ dhs.events.on('NotifyContestGameStart', (data)=>{
 dhs.events.on('NotifyContestGameEnd', async(data)=>{
     let uuid = data.game_uuid
     let gid = findGid(0 - data.contest_id)
-    // if (!gid)
-    //     gid = findGid(data.contest_id)
+    if (!gid)
+        gid = findGid(data.contest_id)
     if (!gid)
         return
     let msg = '对局结束: /?paipu=' + uuid
