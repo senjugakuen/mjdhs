@@ -425,8 +425,8 @@ dhs.events.on('NotifyContestGameStart', (data)=>{
 dhs.events.on('NotifyContestGameEnd', async(data)=>{
     let uuid = data.game_uuid
     let gid = findGid(0 - data.contest_id)
-    if (!gid)
-        gid = findGid(data.contest_id)
+    // if (!gid)
+    //     gid = findGid(data.contest_id)
     if (!gid)
         return
     let msg = '对局结束: /?paipu=' + uuid
