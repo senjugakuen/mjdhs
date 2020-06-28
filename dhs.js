@@ -162,6 +162,7 @@ const apis = {
         let players = (await apis.startManageGame()).players //查找准备中的玩家
 
         if (auto_mode) {
+            nicknames = []
             for (let player of players) {
                 nicknames.push(player.nickname)
                 if (nicknames.length >= 4)
@@ -225,6 +226,9 @@ const apis = {
                     seat: seat
                 }
                 slots.push(tmp), seat++
+            }
+            if (auto_mode && slots.length > player_count) {
+                slots.splice(slots.length-1, 1)
             }
         }
 
