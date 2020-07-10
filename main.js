@@ -336,7 +336,7 @@ const main = async(data)=>{
                     let tag = param.split('||')[1]
                     tag = tag ? tag : ''
                     if (res.result) 
-                        return //`${tag}开赛成功。`
+                        return `${tag}开赛成功。`
                     else
                         return `${tag}开赛失败。 ${res.message}。${param?'':'\n※查看开赛详细用法输入: %开赛?'}`
                     break
