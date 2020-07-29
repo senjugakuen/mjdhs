@@ -320,7 +320,9 @@ const checkQueue = async()=>{
 }
 
 // 初始化
+let retry_flag = true
 const init = async()=>{
+    retry_flag = true
     try {
         await dhs.sendAsync(
             'loginContestManager',
@@ -336,9 +338,7 @@ const init = async()=>{
             callApi('startManageGameAndCache', cid)
         }
         // console.log(require('util').inspect(gaming_list, {showHidden: false, depth: null}))
-    } catch (e) {
-        // console.log(e)
-    }
+    } catch (e) {}
 }
 
 // unique_id转contest_id
@@ -350,8 +350,14 @@ const start = (account, password, option = {})=>{
     auth.password = password
     dhs = new MJSoul.DHS(option)
     dhs.on('error', (e)=>{})
-    dhs.on('close', ()=>{
+    dhs.on('close', async()=>{
         current_cid = 0
+        try {
+            if (retry_flag)
+                await fetchRelatedContestList()
+        } catch (e) {
+            retry_flag = false
+        }
     })
     dhs.on('NotifyContestMatchingPlayer', (data)=>{
         let cid = getCid(data.unique_id)
