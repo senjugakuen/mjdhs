@@ -1,5 +1,6 @@
 'use strict'
 const fs = require('fs')
+const WebSocket = require("ws")
 const url = require("url")
 const proc = require('child_process')
 process.on('uncaughtException', (e)=>{
@@ -14,7 +15,7 @@ process.on('unhandledRejection', (reason, promise)=>{
 const main = require('./main')
 const http = require('http')
 const config = require('./config')
-http.createServer((req, res)=>{
+const server = http.createServer((req, res)=>{
 
     //接收github推送事件，不需要可屏蔽相关代码
     let r = url.parse(req.url)
@@ -60,4 +61,35 @@ http.createServer((req, res)=>{
         res.writeHead(404)
         res.end()
     })
-}).listen(config.port)
+})
+
+const ws = new WebSocket.Server({server})
+ws.on("connection", async(conn)=>{
+    conn.on("message", async(data)=>{
+        try {
+            data = JSON.parse(data)
+            if (data.post_type === 'message') {
+                data.message = data.raw_message
+                let result = await main(data)
+                if (result) {
+                    if (result === 'reboot')
+                        process.exit(1)
+                    else {
+                        let response = {
+                            action: ".handle_quick_operation",
+                            params: {
+                                context: data,
+                                operation: {
+                                    reply: typeof result === 'string' ? result : JSON.stringify(result)
+                                }
+                            }
+                        }
+                        conn.send(JSON.stringify(response))
+                    }
+                }
+            }
+        } catch (e) {}
+    })
+})
+
+server.listen(config.port)
