@@ -1,11 +1,11 @@
 # dhs
 
 通过QQ机器人管理雀魂大会室后台  
-目前QQ群和赛事ID为一对一关系
+目前QQ群和赛事ID为一对一关系  
+使用[CQHTTP](https://cqhttp.cc/)协议，支持http上报或反向ws
 
 ### **依赖**
 
-* 依赖酷Q和CQ-HTTP-API
 * nodejs-v8.10以上和相关npm包
 
 ### **安装**
