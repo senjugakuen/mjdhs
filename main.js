@@ -156,7 +156,7 @@ const main = async(data)=>{
     if (!cid && cmd !== "绑定")
         return '尚未绑定比赛。需要帮助输入: %帮助'
     else {
-        if (!is_admin && !isMaster(data.user_id) && ['解绑', '添加', '删除', '重置', '停止', '终止', '暂停', '恢复'].includes(cmd))
+        if (!is_admin && !isMaster(data.user_id) && ['解绑', '添加', '删除', '重置', '停止', '终止', '暂停', '恢复', '开赛'].includes(cmd))
             return '这个指令需要小绿人权限'
         try {
             let res = ''
