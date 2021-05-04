@@ -58,8 +58,8 @@ const server = http.createServer((req, res)=>{
                 return
             }
         }
-        res.writeHead(200)
-        res.end("empty")
+        res.writeHead(404)
+        res.end()
     })
 })
 
