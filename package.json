@@ -1,30 +1,9 @@
 {
-  "name": "dhs",
-  "version": "0.0.1",
-  "description": "majsoul 雀魂大会室自动管理",
+  "name": "oicq-plugin-mjdhs",
+  "version": "1.0.0",
+  "description": "majsoul 雀魂大会室自动管理 机器人插件",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/takayama-lily/dhs.git"
-  },
-  "keywords": [
-    "majsoul",
-    "mahjongsoul",
-    "mjsoul"
-  ],
-  "author": "takayama <takayama@foxmail.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/takayama-lily/dhs/issues"
-  },
-  "homepage": "https://github.com/takayama-lily/dhs#readme",
-  "dependencies": {
-    "https-proxy-agent": "^5.0.0",
-    "mjsoul": "^2.1.3",
-    "moment": "^2.27.0",
-    "ws": "^7.3.1"
-  }
+  "repository": "https://github.com/takayama-lily/dhs.git",
+  "author": "takayama",
+  "license": "MIT"
 }

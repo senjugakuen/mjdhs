@@ -1,44 +1,42 @@
 'use strict'
 const fs = require('fs')
+const path = require('path')
 const moment = require('moment')
 const http = require('http')
 const dhs = require('./dhs')
 const config = require('./config')
 
-config.account = process.env.MAJSOUL_DHS_ACCOUNT
-config.password = process.env.MAJSOUL_DHS_PASSWORD
-if (!config.account || !config.password) {
-    console.log(`需要设置如下2个系统环境变量：
-MAJSOUL_DHS_ACCOUNT 雀魂账号
-MAJSOUL_DHS_PASSWORD 雀魂密码`)
-    process.exit(2)
+const bots = new Set
+
+let running = false
+let db = { }
+
+function saveDbSync() {
+    return fs.promises.writeFile('./db', JSON.stringify(db))
 }
 
-// 加载db
-let db = {}
-if (fs.existsSync('./db')) {
-    db = JSON.parse(fs.readFileSync('./db'))
+async function start() {
+    try {
+        db = JSON.parse(await fs.promises.readFile(path.join(__dirname, './db')))
+    } catch { }
+    console.log(Date(), "雀魂大会室管理系统启动")
+    dhs.start(config.account, config.password, {url: config.dhs_url})
+    running = true
 }
-// 保存db
-const saveDbSync = ()=>{
-    fs.writeFileSync('./db', JSON.stringify(db))
+function stop() {
+    running = false
+    return new Promise((resolve)=>{
+        console.log(Date(), "雀魂大会室管理系统停止")
+        dhs.close(resolve)
+    })
 }
-process.on('exit', saveDbSync)
-
-// 启动
-dhs.start(config.account, config.password, {url: config.dhs_url})
-console.log(Date(), "已启动")
 
 const isMaster = (id)=>{
     return config.master.includes(id)
 }
 
-// 安全退出(forever或pm2自动重启)
-const reboot = async()=>{
-    console.log(Date(), "已停止")
-    return new Promise((resolve, reject)=>{
-        dhs.close(()=>resolve())
-    })
+function reboot() {
+    return stop().then(start)
 }
 
 const callApi = async(method, cid, param)=>{
@@ -114,19 +112,21 @@ const findGid = (cid)=>{
     return parseInt(Object.keys(db).find(k=>db[k]===cid))
 }
 
-const main = async(data)=>{
-    data.message = data.message.trim()
+async function onmessage(data) {
+    if (!running)
+        return "插件可能正在重启，请再试一次"
+    let message = data.raw_message.trim()
     let prefix
-    if (data.message.substr(0, 3).toLowerCase() === 'dhs') {
+    if (message.substr(0, 3).toLowerCase() === 'dhs') {
         prefix = 'dhs'
-        data.message = data.message.substr(3).trim()
-    } else if (data.message.substr(0, 1) === '%') {
-        prefix = data.message.substr(0, 1)
-        data.message = data.message.substr(1).trim()
+        message = message.substr(3).trim()
+    } else if (message.substr(0, 1) === '%') {
+        prefix = message.substr(0, 1)
+        message = message.substr(1).trim()
     } else {
         return
     }
-    let cmd = data.message.substr(0, 2)
+    let cmd = message.substr(0, 2)
     cmd = cmd.replace("啟","启")
         .replace("幫","帮")
         .replace("綁","绑")
@@ -141,13 +141,14 @@ const main = async(data)=>{
         .replace("暫","暂")
         .replace("復","复")
     if (isMaster(data.user_id) && cmd === '重启') {
+        data.reply("开始重启插件")
         await reboot()
-        return 'reboot'
+        return '重启完成'
     }
     if ((prefix === 'dhs' && cmd === '') || cmd === '帮助')
         return help
 
-    let param = data.message.substr(2).trim().replace(/(\r\n|\n|\r)/g,',')
+    let param = message.substr(2).trim().replace(/(\r\n|\n|\r)/g,',')
     let gid = data.group_id
     if (!gid) return 'dhs各指令只能在群里使用'
     let is_admin = ['owner', 'admin'].includes(data.sender.role)
@@ -164,7 +165,7 @@ const main = async(data)=>{
                 case '播报':
                     cid = 0 - cid
                     db[gid] = cid
-                    saveDbSync()
+                    await saveDbSync()
                     if (cid > 0)
                         return "播报已关闭"
                     else
@@ -180,14 +181,14 @@ const main = async(data)=>{
                         return cid + '已经绑定了其他群。'
                     await callApi('startManageGame', cid)
                     db[gid] = cid
-                    saveDbSync()
+                    await saveDbSync()
                     return cid + "绑定成功。"
                     break
                 case '解绑':
                     if (!cid)
                         return '尚未绑定比赛。'
                     delete db[gid]
-                    saveDbSync()
+                    await saveDbSync()
                     return cid + "解绑成功。(为了安全请务必删除大会室后台的管理权限)"
                     break
                 case '更新':
@@ -197,7 +198,7 @@ const main = async(data)=>{
                         if (!contest_list.hasOwnProperty(Math.abs(db[k])))
                             delete db[k]
                     }
-                    saveDbSync()
+                    await saveDbSync()
                     return '好了'
                     break
                 case '规则':
@@ -365,7 +366,7 @@ const main = async(data)=>{
             }
         } catch (e) {
             if (!e.error) {
-                fs.appendFileSync('err.log', Date() + ' ' + e.stack + '\n')
+                fs.appendFile('err.log', Date() + ' ' + e.stack + '\n', () => { })
                 return '未知错误。'
             }
             let error = e.error
@@ -375,15 +376,17 @@ const main = async(data)=>{
                 return '响应超时，可能已经执行成功。'
             if (error.code === 9000 || error.code === 2501)
                 return `没有赛事${error.cid}的管理权限，请把 ${config.eid} 添加为赛事管理。`
-            if (error.code === 2505)
-                return 'reboot'
+            if (error.code === 2505) {
+                reboot()
+                return '遇到错误，需要重启，请再试一次'
+            }
             if (error.code === 2521)
                 return '自动匹配模式下不能手动开赛。'
             if (error.code === 1203)
                 return '游戏编号错误。'
             if (error.code === 1210)
                 return '游戏编号错误(已经执行了该操作)。'
-            fs.appendFileSync('err.log', Date() + ' Error.code: ' + error.code + '\n')
+            fs.appendFile('err.log', Date() + ' Error.code: ' + error.code + '\n', () => { })
             return `执行失败(错误码:${error.code})。`
         }
     }
@@ -391,10 +394,10 @@ const main = async(data)=>{
 
 // 主动发送群消息
 const sendGroupMessage = (gid, msg)=>{
-    // console.log(msg)
-    msg = encodeURIComponent(msg)
-    let url = config.cqhttp_url + `/send_group_msg?group_id=${gid}&message=` + msg
-    http.get(url, ()=>{}).on('error', ()=>{})
+    for (let bot of bots) {
+        if (bot.gl.has(gid))
+            bot.sendGroupMsg(gid, msg)
+    }
 }
 
 // 选手 准备&取消 通知
@@ -476,4 +479,7 @@ dhs.events.on('NotifyContestGameEnd', async(data)=>{
 //     sendGroupMessage(gid, '管理员更新了大会室' + type)
 // })
 
-module.exports = main
+module.exports = {
+    onmessage, bots,
+    start, stop
+}

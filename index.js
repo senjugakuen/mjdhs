@@ -1,95 +1,28 @@
 'use strict'
-const fs = require('fs')
-const WebSocket = require("ws")
-const url = require("url")
-const proc = require('child_process')
-process.on('uncaughtException', (e)=>{
-    fs.appendFileSync('err.log', Date() + ' ' + e.stack + '\n')
-    process.exit(1)
-})
-process.on('unhandledRejection', (reason, promise)=>{
-    fs.appendFileSync('err.log', Date() + ' Unhandled Rejection: ' + reason + '\n')
-    process.exit(1)
-});
+const { onmessage, start, stop, bots } = require('./main')
 
-const main = require('./main')
-const http = require('http')
-const config = require('./config')
-const server = http.createServer((req, res)=>{
+start()
 
-    //接收github推送事件，不需要可屏蔽相关代码
-    let r = url.parse(req.url)
-    if (r.pathname === "/youShouldPull") {
-        proc.exec('./up', (error, stdout, stderr) => {
-            let output = JSON.stringify({
-                "stdout": stdout,
-                "stderr": stderr,
-                "error": error
-            })
-            res.end(output)
-        })
-        return
-    }
+async function listener(data) {
+    const reply = await onmessage(data)
+    if (reply)
+        data.reply(reply)
+}
 
-    if (req.method !== 'POST' || (config.allowed.length > 0 && !config.allowed.includes(req.socket.remoteAddress))) {
-        res.writeHead(404)
-        res.end()
-        return
-    }
+function activate(bot) {
+    bots.add(bot)
+    bot.on("message", listener)
+}
 
-    let data = []
-    req.on('data', (d)=>data.push(d))
-    req.on('end', async()=>{
-        data = Buffer.concat(data).toString()
-        data = JSON.parse(data)
-        if (data.post_type === 'message') {
-            let message = ""
-            for (let v of data.message) {
-                if (v.type === "text")
-                    message += v.data.text
-            }
-            data.message = message
-            let result = await main(data)
-            if (result) {
-                let msg = result === 'reboot' ? '请3秒后再试一次' : result
-                res.end(JSON.stringify({'reply': typeof msg === 'string' ? msg : JSON.stringify(msg)}))
-                if (result === 'reboot')
-                    process.exit(1)
-                return
-            }
-        }
-        res.writeHead(404)
-        res.end()
-    })
-})
+function deactivate(bot) {
+    bots.delete(bot)
+    bot.off("message", listener)
+}
 
-const ws = new WebSocket.Server({server})
-ws.on("connection", async(conn)=>{
-    conn.on("message", async(data)=>{
-        try {
-            data = JSON.parse(data)
-            if (data.post_type === 'message') {
-                data.message = data.raw_message
-                let result = await main(data)
-                if (result) {
-                    if (result === 'reboot')
-                        process.exit(1)
-                    else {
-                        let response = {
-                            action: ".handle_quick_operation",
-                            params: {
-                                context: data,
-                                operation: {
-                                    reply: typeof result === 'string' ? result : JSON.stringify(result)
-                                }
-                            }
-                        }
-                        conn.send(JSON.stringify(response))
-                    }
-                }
-            }
-        } catch (e) {}
-    })
-})
+function destruct() {
+    return stop()
+}
 
-server.listen(config.port)
+module.exports = {
+    activate, deactivate, destruct
+}
