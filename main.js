@@ -12,7 +12,7 @@ let running = false
 let db = { }
 
 function saveDbSync() {
-    return fs.promises.writeFile('./db', JSON.stringify(db))
+    return fs.promises.writeFile(path.join(__dirname, './db'), JSON.stringify(db))
 }
 
 async function start() {
