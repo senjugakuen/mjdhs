@@ -19,10 +19,10 @@ function deactivate(bot) {
     bot.off("message", listener)
 }
 
-function destruct() {
+function destructor() {
     return stop()
 }
 
 module.exports = {
-    activate, deactivate, destruct
+    activate, deactivate, destructor
 }
