@@ -148,7 +148,7 @@ async function onmessage(data) {
     if ((prefix === 'dhs' && cmd === '') || cmd === '帮助')
         return help
 
-    let param = message.substr(2).trim().replace(/(\r\n|\n|\r)/g,',')
+    let param = message.substr(2).trim().replace(/&amp;/g, "&").replace(/(\r\n|\n|\r)/g,',')
     let gid = data.group_id
     if (!gid) return 'dhs各指令只能在群里使用'
     let is_admin = ['owner', 'admin'].includes(data.sender.role)
