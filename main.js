@@ -43,7 +43,7 @@ const callApi = async(method, cid, param)=>{
     cid = Math.abs(cid)
     return new Promise((resolve, reject)=>{
         dhs.callApi(method, cid, (data)=>{
-            if (data.hasOwnProperty('error'))
+            if (Reflect.has(data, "error"))
                 reject(data)
             else
                 resolve(data)
