@@ -1,6 +1,7 @@
 'use strict'
 const Events = require('events')
 const MJSoul = require('mjsoul')
+/** @type {MJSoul} */
 let dhs = null
 let auth = {
     account: '',
@@ -412,7 +413,10 @@ const start = (account, password, option = {})=>{
 
 // 发送停止信号
 const close = (cb)=>{
-    callApi('stop', 0, cb)
+    callApi('stop', 0, () => {
+        dhs.close()
+        setTimeout(cb, 1000)
+    })
 }
 
 module.exports.start = start
