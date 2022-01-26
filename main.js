@@ -115,7 +115,7 @@ const findGid = (cid)=>{
 
 async function onmessage(data) {
     if (!running)
-        return "插件可能正在重启，请再试一次"
+        return
     let message = data.raw_message.trim()
     let prefix
     if (message.substr(0, 3).toLowerCase() === 'dhs') {
